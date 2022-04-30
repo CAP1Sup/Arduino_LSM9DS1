@@ -88,7 +88,7 @@ static unsigned long lastPrint = 0; // Keep track of print time
 void printGyro();
 void printAccel();
 void printMag();
-void printAttitude(float ax, float ay, float az, float mx, float my, float mz);
+void printAltitude(float ax, float ay, float az, float mx, float my, float mz);
 
 void setup()
 {

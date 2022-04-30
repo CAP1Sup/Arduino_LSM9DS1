@@ -188,7 +188,6 @@ struct gyroSettings
 	uint8_t flipX;
 	uint8_t flipY;
 	uint8_t flipZ;
-	uint8_t orientation;
 	uint8_t enableX;
 	uint8_t enableY;
 	uint8_t enableZ;
