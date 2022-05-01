@@ -88,6 +88,11 @@ public:
 	void calibrateMag(bool loadIn = true);
 	void magOffset(uint8_t axis, int16_t offset);
 
+	// Sets internal bias corrections
+	// Useful so that the sensor doesn't need to be recalibrated every time
+	void setRawBiases(int16_t gyroBiases[], int16_t accelBiases[]);
+	void setBiases(float gyroBiases[], float accelBiases[]);
+
 	// accelAvailable() -- Polls the accelerometer status register to check
 	// if new data is available.
 	// Output:	1 - New data available

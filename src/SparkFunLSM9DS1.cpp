@@ -385,6 +385,9 @@ void LSM9DS1::calibrate(bool autoCalc)
 	int32_t aBiasRawTemp[3] = {0, 0, 0};
 	int32_t gBiasRawTemp[3] = {0, 0, 0};
 
+	// Readings should not have an bias applied to them
+	_autoCalc = false;
+
 	// Turn on FIFO and set threshold to 32 samples
 	enableFIFO(true);
 	setFIFO(FIFO_THS, 0x1F);
@@ -421,7 +424,8 @@ void LSM9DS1::calibrate(bool autoCalc)
 	enableFIFO(false);
 	setFIFO(FIFO_OFF, 0x00);
 
-	if (autoCalc) _autoCalc = true;
+	// Save if the biases should be automatically removed
+	_autoCalc = autoCalc;
 }
 
 void LSM9DS1::calibrateMag(bool loadIn)
@@ -463,6 +467,20 @@ void LSM9DS1::magOffset(uint8_t axis, int16_t offset)
 	lsb = offset & 0x00FF;
 	mWriteByte(OFFSET_X_REG_L_M + (2 * axis), lsb);
 	mWriteByte(OFFSET_X_REG_H_M + (2 * axis), msb);
+}
+
+// Sets internal bias corrections
+// Useful so that the sensor doesn't need to be recalibrated every time
+void LSM9DS1::setRawBiases(int16_t gyroBiases[], int16_t accelBiases[]) {
+
+	// Set the biases for each axis
+	for (uint8_t axis = 0; axis < 3; axis++)
+	{
+		gBiasRaw[axis] = gyroBiases[axis];
+		gBias[axis] = calcGyro(gBiasRaw[axis]);
+		aBiasRaw[axis] = accelBiases[axis];
+		aBias[axis] = calcAccel(aBiasRaw[axis]);
+	}
 }
 
 void LSM9DS1::initMag()
