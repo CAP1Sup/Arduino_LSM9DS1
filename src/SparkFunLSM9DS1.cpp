@@ -155,13 +155,20 @@ uint16_t LSM9DS1::begin(uint8_t agAddress, uint8_t mAddress, TwoWire &wirePort)
 	calcmRes(); // Calculate Gs / ADC tick, stored in mRes variable
 	calcaRes(); // Calculate g / ADC tick, stored in aRes variable
 
-	// We expect caller to begin their I2C port, with the speed of their choice external to the library
-	// But if they forget, we could start the hardware here.
-	settings.device.i2c->begin();	// Initialize I2C library
+	// Initialize I2C library
+	settings.device.i2c->begin();
+
+	// Configure the communication speed (if it can)
+	#if defined(ARDUINO_ARCH_MBED)
+		settings.device.i2c->setClock(400000);
+	#endif
 
 	// Reboot device and settings to default
 	xgWriteByte(CTRL_REG8, 0x05);
 	mWriteByte(CTRL_REG2_M, 0x0c);
+
+	// Allow the IMU time to reboot
+	delay(10);
 
 	// To verify communication, we can read from the WHO_AM_I register of
 	// each device. Store those in a variable so we can return them.
@@ -201,6 +208,13 @@ uint16_t LSM9DS1::beginSPI(uint8_t ag_CS_pin, uint8_t m_CS_pin)
 
 	// Now, initialize our hardware interface.
 	initSPI();	// Initialize SPI
+
+	// Reboot device and settings to default
+	xgWriteByte(CTRL_REG8, 0x05);
+	mWriteByte(CTRL_REG2_M, 0x0c);
+
+	// Allow the IMU time to reboot
+	delay(10);
 
 	// To verify communication, we can read from the WHO_AM_I register of
 	// each device. Store those in a variable so we can return them.
