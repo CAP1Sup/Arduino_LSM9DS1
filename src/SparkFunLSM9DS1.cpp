@@ -76,6 +76,10 @@ void LSM9DS1::init()
 	// Actual value depends on sample rate. Only applies
 	// if gyroHPFEnable is true.
 	settings.gyro.HPFCutoff = 0;
+	// Gyro HPF reference frequency: value between 0-255
+	settings.gyro.HPFReference = 0;
+
+	// Orientation adjustments
 	settings.gyro.flipX = false;
 	settings.gyro.flipY = false;
 	settings.gyro.flipZ = false;
@@ -187,6 +191,9 @@ uint16_t LSM9DS1::begin(uint8_t agAddress, uint8_t mAddress, TwoWire &wirePort)
 
 	// Magnetometer initialization stuff:
 	initMag(); // "Turn on" all axes of the mag. Set up interrupts, etc.
+
+	// Give the IMU some time to accept the new settings
+	delay(50);
 
 	// Once everything is initialized, return the WHO_AM_I registers we read:
 	return whoAmICombined;
@@ -307,7 +314,11 @@ void LSM9DS1::initGyro()
 	if (settings.gyro.flipX) tempRegValue |= (1<<5);
 	if (settings.gyro.flipY) tempRegValue |= (1<<4);
 	if (settings.gyro.flipZ) tempRegValue |= (1<<3);
+	// TODO: Add orientation config
 	xgWriteByte(ORIENT_CFG_G, tempRegValue);
+
+	// Set the reference G value for the filter
+	xgWriteByte(REFERENCE_G, settings.gyro.HPFReference);
 }
 
 void LSM9DS1::initAccel()

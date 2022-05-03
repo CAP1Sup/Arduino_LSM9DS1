@@ -185,6 +185,7 @@ struct gyroSettings
 	uint8_t lowPowerEnable;
 	uint8_t HPFEnable;
 	uint8_t HPFCutoff;
+	uint8_t HPFReference;
 	uint8_t flipX;
 	uint8_t flipY;
 	uint8_t flipZ;
