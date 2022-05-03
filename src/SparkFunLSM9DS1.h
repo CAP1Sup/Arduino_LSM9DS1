@@ -90,8 +90,8 @@ public:
 
 	// Sets internal bias corrections
 	// Useful so that the sensor doesn't need to be recalibrated every time
-	void setRawBiases(int16_t gyroBiases[], int16_t accelBiases[]);
-	void setBiases(float gyroBiases[], float accelBiases[]);
+	void setRawBiases(int16_t gyroBiases[], int16_t accelBiases[], bool autoCalc = true);
+	//void setBiases(float gyroBiases[], float accelBiases[]);
 
 	// accelAvailable() -- Polls the accelerometer status register to check
 	// if new data is available.
@@ -343,9 +343,6 @@ public:
 
 
 protected:
-	// x_mAddress and gAddress store the I2C address or SPI chip select pin
-	// for each sensor.
-	uint8_t _mAddress, _xgAddress;
 
 	// gRes, aRes, and mRes store the current resolution for each sensor.
 	// Units of these values would be DPS (or g's or Gs's) per ADC tick.
