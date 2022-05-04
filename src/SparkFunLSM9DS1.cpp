@@ -131,16 +131,20 @@ void LSM9DS1::init()
 	settings.mag.operatingMode = 0;
 
 	settings.temp.enabled = true;
+
+	// Zero the biases of each of the sensors
 	for (int i=0; i<3; i++)
 	{
-		gBias[i] = 0;
-		aBias[i] = 0;
-		mBias[i] = 0;
-		gBiasRaw[i] = 0;
-		aBiasRaw[i] = 0;
-		mBiasRaw[i] = 0;
+		// "Zero" the slope biases (note that the normal operation is one input unit is one output unit)
+		gSlopeBias[i] = 1;
+		aSlopeBias[i] = 1;
+		mSlopeBias[i] = 1;
+
+		// Zero the offset biases
+		gOffsetBias[i] = 0;
+		aOffsetBias[i] = 0;
+		mOffsetBias[i] = 0;
 	}
-	_autoCalc = false;
 }
 
 
@@ -396,7 +400,7 @@ void LSM9DS1::initAccel()
  *
  * @param autoCalc If the calibration should be automatically applied to future readings
 */
-void LSM9DS1::calibrate(bool autoCalc)
+void LSM9DS1::calibrate()
 {
 	uint8_t sampleCount = 0;
 	int32_t aBiasRawTemp[3] = {0, 0, 0};
@@ -445,7 +449,7 @@ void LSM9DS1::calibrate(bool autoCalc)
 	_autoCalc = autoCalc;
 }
 
-void LSM9DS1::calibrateMag(bool loadIn)
+void LSM9DS1::calibrateMag()
 {
 	int i, j;
 	int16_t magMin[3] = {0, 0, 0};
@@ -484,23 +488,6 @@ void LSM9DS1::magOffset(uint8_t axis, int16_t offset)
 	lsb = offset & 0x00FF;
 	mWriteByte(OFFSET_X_REG_L_M + (2 * axis), lsb);
 	mWriteByte(OFFSET_X_REG_H_M + (2 * axis), msb);
-}
-
-// Sets internal bias corrections
-// Useful so that the sensor doesn't need to be recalibrated every time
-void LSM9DS1::setRawBiases(int16_t gyroBiases[], int16_t accelBiases[], bool autoCalc) {
-
-	// Set the biases for each axis
-	for (uint8_t axis = 0; axis < 3; axis++)
-	{
-		gBiasRaw[axis] = gyroBiases[axis];
-		gBias[axis] = calcGyro(gBiasRaw[axis]);
-		aBiasRaw[axis] = accelBiases[axis];
-		aBias[axis] = calcAccel(aBiasRaw[axis]);
-	}
-
-	// Save if the biases should be automatically removed
-	_autoCalc = autoCalc;
 }
 
 void LSM9DS1::initMag()
@@ -570,6 +557,56 @@ void LSM9DS1::initMag()
 	//	0:continuous, 1:not updated until MSB/LSB are read
 	tempRegValue = 0;
 	mWriteByte(CTRL_REG5_M, tempRegValue);
+}
+
+
+// Taken from https://github.com/FemmeVerbeek/Arduino_LSM9DS1/blob/master/src/LSM9DS1.cpp
+void LSM9DS1::setAccelOffset(float x, float y, float z)
+{  aOffsetBias[0] = x /(accelUnit * aSlopeBias[0]);
+   aOffsetBias[1] = y /(accelUnit * aSlopeBias[1]);
+   aOffsetBias[2] = z /(accelUnit * aSlopeBias[2]);
+}
+
+//Slope is already dimensionless, so it can be stored as is.
+void LSM9DS1::setAccelSlope(float x, float y, float z)
+{  if (x==0) x=1;  //zero slope not allowed
+   if (y==0) y=1;
+   if (z==0) z=1;
+   aSlopeBias[0] = x;
+   aSlopeBias[1] = y;
+   aSlopeBias[2] = z;
+}
+
+void LSM9DS1::setGyroOffset(float x, float y, float z)
+{  gOffsetBias[0] = x /(accelUnit * gSlopeBias[0]);
+   gOffsetBias[1] = y /(accelUnit * gSlopeBias[1]);
+   gOffsetBias[2] = z /(accelUnit * gSlopeBias[2]);
+}
+
+// Slope is already dimensionless, so it can be stored as is.
+void LSM9DS1::setGyroSlope(float x, float y, float z)
+{  if (x==0) x=1;  //zero slope not allowed
+   if (y==0) y=1;
+   if (z==0) z=1;
+   gSlopeBias[0] = x;
+   gSlopeBias[1] = y;
+   gSlopeBias[2] = z;
+}
+
+void LSM9DS1::setMagOffset(float x, float y, float z)
+{  mOffsetBias[0] = x /(accelUnit * mSlopeBias[0]);
+   mOffsetBias[1] = y /(accelUnit * mSlopeBias[1]);
+   mOffsetBias[2] = z /(accelUnit * mSlopeBias[2]);
+}
+
+//Slope is already dimensionless, so it can be stored as is.
+void LSM9DS1::setMagSlope(float x, float y, float z)
+{  if (x==0) x=1;  //zero slope not allowed
+   if (y==0) y=1;
+   if (z==0) z=1;
+   mSlopeBias[0] = x;
+   mSlopeBias[1] = y;
+   mSlopeBias[2] = z;
 }
 
 uint8_t LSM9DS1::accelAvailable()
@@ -678,7 +715,7 @@ void LSM9DS1::readTemp()
 	}
 }
 
-void LSM9DS1::readGyro()
+void LSM9DS1::readRawGyro()
 {
 	uint8_t temp[6]; // We'll read six bytes from the gyro into temp
 	if ( xgReadBytes(OUT_X_L_G, temp, 6) == 6) // Read 6 bytes, beginning at OUT_X_L_G

@@ -45,9 +45,9 @@ enum accel_scale
 // gyro_scale defines the possible full-scale ranges of the gyroscope:
 enum gyro_scale
 {
-	G_SCALE_245DPS,  // 00:  245 degrees per second
-	G_SCALE_500DPS,  // 01:  500 dps
-	G_SCALE_2000DPS, // 11:  2000 dps
+	G_SCALE_245DPS  = 0, // 00:  245 degrees per second
+	G_SCALE_500DPS  = 1, // 01:  500 dps
+	G_SCALE_2000DPS = 3  // 11:  2000 dps
 };
 
 // mag_scale defines all possible FSR's of the magnetometer:

@@ -52,12 +52,26 @@ public:
 	// axis. Call readGyro(), readAccel(), and readMag() first, before using
 	// these variables!
 	// These values are the RAW signed 16-bit readings from the sensors.
-	int16_t gx, gy, gz; // x, y, and z axis readings of the gyroscope
-	int16_t ax, ay, az; // x, y, and z axis readings of the accelerometer
-	int16_t mx, my, mz; // x, y, and z axis readings of the magnetometer
-    int16_t temperature; // Chip temperature
-	float gBias[3], aBias[3], mBias[3];
-	int16_t gBiasRaw[3], aBiasRaw[3], mBiasRaw[3];
+	int16_t raw_gx, raw_gy, raw_gz; // x, y, and z axis readings of the gyroscope
+	int16_t raw_ax, raw_ay, raw_az; // x, y, and z axis readings of the accelerometer
+	int16_t raw_mx, raw_my, raw_mz; // x, y, and z axis readings of the magnetometer
+    int16_t raw_temperature; // Chip temperature
+
+	// These values are the actual readings from the sensors.
+	float gx, gy, gz; // x, y, and z axis readings of the gyroscope
+	float ax, ay, az; // x, y, and z axis readings of the accelerometer
+	float mx, my, mz; // x, y, and z axis readings of the magnetometer
+    float temperature; // Chip temperature
+
+	// Slope biases
+	float gSlopeBias[3]; // Slope of the gyroscope bias
+	float aSlopeBias[3]; // Slope of the accelerometer bias
+	float mSlopeBias[3]; // Slope of the magnetometer bias
+
+	// Offset biases
+	float gOffsetBias[3]; // Offset of the gyroscope bias
+	float aOffsetBias[3]; // Offset of the accelerometer bias
+	float mOffsetBias[3]; // Offset of the magnetometer bias
 
 	// LSM9DS1 -- LSM9DS1 class constructor
 	// The constructor will set up a handful of private variables, and set the
@@ -84,14 +98,19 @@ public:
 	uint16_t begin(uint8_t agAddress = LSM9DS1_AG_ADDR(1), uint8_t mAddress = LSM9DS1_M_ADDR(1), TwoWire& wirePort = Wire); //By default use the default I2C addres, and use Wire port
 	uint16_t beginSPI(uint8_t ag_CS_pin, uint8_t m_CS_pin);
 
-	void calibrate(bool autoCalc = true);
-	void calibrateMag(bool loadIn = true);
+	void calibrate();
+	void calibrateMag();
 	void magOffset(uint8_t axis, int16_t offset);
 
-	// Sets internal bias corrections
-	// Useful so that the sensor doesn't need to be recalibrated every time
-	void setRawBiases(int16_t gyroBiases[], int16_t accelBiases[], bool autoCalc = true);
-	//void setBiases(float gyroBiases[], float accelBiases[]);
+	// Bias corrections (slope)
+	void setAccelSlope(float x, float y, float z);
+	void setGyroSlope(float x, float y, float z);
+	void setMagSlope(float x, float y, float z);
+
+	// Bias corrections (offsets)
+	void setAccelOffset(float x, float y, float z);
+	void setGyroOffset(float x, float y, float z);
+	void setMagOffset(float x, float y, float z);
 
 	// accelAvailable() -- Polls the accelerometer status register to check
 	// if new data is available.
@@ -121,74 +140,60 @@ public:
 	//			0 - No new data available
 	uint8_t magAvailable(lsm9ds1_axis axis = ALL_AXIS);
 
-	// readGyro() -- Read the gyroscope output registers.
+	// readRawGyro() -- Read the gyroscope output registers.
 	// This function will read all six gyroscope output registers.
 	// The readings are stored in the class' gx, gy, and gz variables. Read
 	// those _after_ calling readGyro().
+	void readRawGyro();
 	void readGyro();
 
-	// int16_t readGyro(axis) -- Read a specific axis of the gyroscope.
+	// int16_t readRawGyro(axis) -- Read a specific axis of the gyroscope.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
 	// Input:
 	//	- axis: can be either X_AXIS, Y_AXIS, or Z_AXIS.
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
-	int16_t readGyro(lsm9ds1_axis axis);
+	int16_t readRawGyro(lsm9ds1_axis axis);
+	float readGyro(lsm9ds1_axis axis);
 
-	// readAccel() -- Read the accelerometer output registers.
+	// readRawAccel() -- Read the accelerometer output registers.
 	// This function will read all six accelerometer output registers.
 	// The readings are stored in the class' ax, ay, and az variables. Read
 	// those _after_ calling readAccel().
+	void readRawAccel();
 	void readAccel();
 
-	// int16_t readAccel(axis) -- Read a specific axis of the accelerometer.
+	// int16_t readRawAccel(axis) -- Read a specific axis of the accelerometer.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
 	// Input:
 	//	- axis: can be either X_AXIS, Y_AXIS, or Z_AXIS.
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
-	int16_t readAccel(lsm9ds1_axis axis);
+	int16_t readRawAccel(lsm9ds1_axis axis);
+	float readAccel(lsm9ds1_axis axis);
 
-	// readMag() -- Read the magnetometer output registers.
+	// readRawMag() -- Read the magnetometer output registers.
 	// This function will read all six magnetometer output registers.
 	// The readings are stored in the class' mx, my, and mz variables. Read
 	// those _after_ calling readMag().
+	void readRawMag();
 	void readMag();
 
-	// int16_t readMag(axis) -- Read a specific axis of the magnetometer.
+	// int16_t readRawMag(axis) -- Read a specific axis of the magnetometer.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
 	// Input:
 	//	- axis: can be either X_AXIS, Y_AXIS, or Z_AXIS.
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
-	int16_t readMag(lsm9ds1_axis axis);
+	int16_t readRawMag(lsm9ds1_axis axis);
+	float readMag(lsm9ds1_axis axis);
 
-	// readTemp() -- Read the temperature output register.
+	// readRawTemp() -- Read the temperature output register.
 	// This function will read two temperature output registers.
 	// The combined readings are stored in the class' temperature variables. Read
 	// those _after_ calling readTemp().
+	void readRawTemp();
 	void readTemp();
-
-	// calcGyro() -- Convert from RAW signed 16-bit value to degrees per second
-	// This function reads in a signed 16-bit value and returns the scaled
-	// DPS. This function relies on gScale and gRes being correct.
-	// Input:
-	//	- gyro = A signed 16-bit raw reading from the gyroscope.
-	float calcGyro(int16_t gyro);
-
-	// calcAccel() -- Convert from RAW signed 16-bit value to gravity (g's).
-	// This function reads in a signed 16-bit value and returns the scaled
-	// g's. This function relies on aScale and aRes being correct.
-	// Input:
-	//	- accel = A signed 16-bit raw reading from the accelerometer.
-	float calcAccel(int16_t accel);
-
-	// calcMag() -- Convert from RAW signed 16-bit value to Gauss (Gs)
-	// This function reads in a signed 16-bit value and returns the scaled
-	// Gs. This function relies on mScale and mRes being correct.
-	// Input:
-	//	- mag = A signed 16-bit raw reading from the magnetometer.
-	float calcMag(int16_t mag);
 
 	// setGyroScale() -- Set the full-scale range of the gyroscope.
 	// This function can be called to set the scale of the gyroscope to
@@ -196,7 +201,7 @@ public:
 	// Input:
 	// 	- gScl = The desired gyroscope scale. Must be one of three possible
 	//		values from the gyro_scale.
-	void setGyroScale(uint16_t gScl);
+	void setGyroScale(gyro_scale gScl);
 
 	// setAccelScale() -- Set the full-scale range of the accelerometer.
 	// This function can be called to set the scale of the accelerometer to
@@ -204,7 +209,7 @@ public:
 	// Input:
 	// 	- aScl = The desired accelerometer scale. Must be one of five possible
 	//		values from the accel_scale.
-	void setAccelScale(uint8_t aScl);
+	void setAccelScale(accel_scale aScl);
 
 	// setMagScale() -- Set the full-scale range of the magnetometer.
 	// This function can be called to set the scale of the magnetometer to
@@ -212,22 +217,22 @@ public:
 	// Input:
 	// 	- mScl = The desired magnetometer scale. Must be one of four possible
 	//		values from the mag_scale.
-	void setMagScale(uint8_t mScl);
+	void setMagScale(mag_scale mScl);
 
 	// setGyroODR() -- Set the output data rate and bandwidth of the gyroscope
 	// Input:
 	//	- gRate = The desired output rate and cutoff frequency of the gyro.
-	void setGyroODR(uint8_t gRate);
+	void setGyroODR(gyro_odr gRate);
 
 	// setAccelODR() -- Set the output data rate of the accelerometer
 	// Input:
 	//	- aRate = The desired output rate of the accel.
-	void setAccelODR(uint8_t aRate);
+	void setAccelODR(accel_odr aRate);
 
 	// setMagODR() -- Set the output data rate of the magnetometer
 	// Input:
 	//	- mRate = The desired output rate of the mag.
-	void setMagODR(uint8_t mRate);
+	void setMagODR(mag_odr mRate);
 
 	// configInactivity() -- Configure inactivity interrupt parameters
 	// Input:
@@ -348,10 +353,6 @@ protected:
 	// Units of these values would be DPS (or g's or Gs's) per ADC tick.
 	// This value is calculated as (sensor scale) / (2^15).
 	float gRes, aRes, mRes;
-
-	// _autoCalc keeps track of whether we're automatically subtracting off
-	// accelerometer and gyroscope bias calculated in calibrate().
-	bool _autoCalc;
 
 	// init() -- Sets up gyro, accel, and mag settings to default.
 	// to set com interface and/or addresses see begin() and beginSPI().
