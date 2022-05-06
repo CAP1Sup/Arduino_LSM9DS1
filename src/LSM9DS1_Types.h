@@ -36,79 +36,79 @@ enum interface_mode
 // accel_scale defines all possible FSR's of the accelerometer:
 enum accel_scale
 {
-	A_SCALE_2G,  // 00:  2g
-	A_SCALE_16G, // 01:  16g
-	A_SCALE_4G,  // 10:  4g
-	A_SCALE_8G   // 11:  8g
+	A_SCALE_2G  = 0b00, // 00:  2g
+	A_SCALE_16G = 0b01, // 01:  16g
+	A_SCALE_4G  = 0b10, // 10:  4g
+	A_SCALE_8G  = 0b11  // 11:  8g
 };
 
 // gyro_scale defines the possible full-scale ranges of the gyroscope:
 enum gyro_scale
 {
-	G_SCALE_245DPS  = 0, // 00:  245 degrees per second
-	G_SCALE_500DPS  = 1, // 01:  500 dps
-	G_SCALE_2000DPS = 3  // 11:  2000 dps
+	G_SCALE_245DPS  = 0b00, // 00:  245 degrees per second
+	G_SCALE_500DPS  = 0b01, // 01:  500 dps
+	G_SCALE_2000DPS = 0b11  // 11:  2000 dps
 };
 
 // mag_scale defines all possible FSR's of the magnetometer:
 enum mag_scale
 {
-	M_SCALE_4GS,  // 00:  4Gs
-	M_SCALE_8GS,  // 01:  8Gs
-	M_SCALE_12GS, // 10:  12Gs
-	M_SCALE_16GS, // 11:  16Gs
+	M_SCALE_4GS  = 0b00, // 00:  4Gs
+	M_SCALE_8GS  = 0b01, // 01:  8Gs
+	M_SCALE_12GS = 0b10, // 10:  12Gs
+	M_SCALE_16GS = 0b11, // 11:  16Gs
 };
 
 // gyro_odr defines all possible data rate/bandwidth combos of the gyro:
 enum gyro_odr
 {
 	//! TODO
-	G_ODR_PD,  // Power down (0)
-	G_ODR_149, // 14.9 Hz (1)
-	G_ODR_595, // 59.5 Hz (2)
-	G_ODR_119, // 119 Hz (3)
-	G_ODR_238, // 238 Hz (4)
-	G_ODR_476, // 476 Hz (5)
-	G_ODR_952  // 952 Hz (6)
+	G_ODR_PD    = 0, // Power down (0)
+	G_ODR_149HZ = 1, // 14.9 Hz (1)
+	G_ODR_595HZ = 2, // 59.5 Hz (2)
+	G_ODR_119HZ = 3, // 119 Hz (3)
+	G_ODR_238HZ = 4, // 238 Hz (4)
+	G_ODR_476HZ = 5, // 476 Hz (5)
+	G_ODR_952HZ = 6  // 952 Hz (6)
 };
 // accel_oder defines all possible output data rates of the accelerometer:
 enum accel_odr
 {
-	XL_POWER_DOWN, // Power-down mode (0x0)
-	XL_ODR_10,	 // 10 Hz (0x1)
-	XL_ODR_50,	 // 50 Hz (0x02)
-	XL_ODR_119,	// 119 Hz (0x3)
-	XL_ODR_238,	// 238 Hz (0x4)
-	XL_ODR_476,	// 476 Hz (0x5)
-	XL_ODR_952	 // 952 Hz (0x6)
+	A_ODR_PD    = 0, // Power-down mode (0)
+	A_ODR_10HZ  = 1, // 10 Hz (1)
+	A_ODR_50HZ  = 2, // 50 Hz (2)
+	A_ODR_119HZ = 3, // 119 Hz (3)
+	A_ODR_238HZ = 4, // 238 Hz (4)
+	A_ODR_476HZ = 5, // 476 Hz (5)
+	A_ODR_952HZ = 6	 // 952 Hz (6)
 };
 
 // accel_abw defines all possible anti-aliasing filter rates of the accelerometer:
 enum accel_abw
 {
-	A_ABW_408, // 408 Hz (0x0)
-	A_ABW_211, // 211 Hz (0x1)
-	A_ABW_105, // 105 Hz (0x2)
-	A_ABW_50,  //  50 Hz (0x3)
+	A_ABW_408HZ = 0, // 408 Hz (0)
+	A_ABW_211HZ = 1, // 211 Hz (1)
+	A_ABW_105HZ = 2, // 105 Hz (2)
+	A_ABW_50HZ  = 3, //  50 Hz (3)
 };
 
 // mag_odr defines all possible output data rates of the magnetometer:
 enum mag_odr
 {
-	M_ODR_0625, // 0.625 Hz (0)
-	M_ODR_125,  // 1.25 Hz (1)
-	M_ODR_250,  // 2.5 Hz (2)
-	M_ODR_5,	// 5 Hz (3)
-	M_ODR_10,   // 10 Hz (4)
-	M_ODR_20,   // 20 Hz (5)
-	M_ODR_40,   // 40 Hz (6)
-	M_ODR_80	// 80 Hz (7)
+	M_ODR_0625HZ = 0, // 0.625 Hz (0)
+	M_ODR_125HZ  = 1, // 1.25 Hz (1)
+	M_ODR_250HZ  = 2, // 2.5 Hz (2)
+	M_ODR_5HZ    = 3, // 5 Hz (3)
+	M_ODR_10HZ   = 4, // 10 Hz (4)
+	M_ODR_20HZ   = 5, // 20 Hz (5)
+	M_ODR_40HZ   = 6, // 40 Hz (6)
+	M_ODR_80HZ   = 7  // 80 Hz (7)
 };
 
 enum interrupt_select
 {
-	XG_INT1 = INT1_CTRL,
-	XG_INT2 = INT2_CTRL
+	INTERRUPT_SELECT_INT1 = INT1_CTRL,
+	INTERRUPT_SELECT_INT2 = INT2_CTRL
 };
 
 enum interrupt_generators
@@ -177,22 +177,22 @@ enum fifoMode_type
 struct gyroSettings
 {
 	// Gyroscope settings:
-	uint8_t enabled;
-	uint16_t scale; // Changed this to 16-bit
-	uint8_t sampleRate;
+	bool enabled;
+	gyro_scale scale;
+	gyro_odr sampleRate;
 	// New gyro stuff:
 	uint8_t bandwidth;
-	uint8_t lowPowerEnable;
-	uint8_t HPFEnable;
+	bool lowPowerEnable;
+	bool HPFEnable;
 	uint8_t HPFCutoff;
 	uint8_t HPFReference;
-	uint8_t flipX;
-	uint8_t flipY;
-	uint8_t flipZ;
-	uint8_t enableX;
-	uint8_t enableY;
-	uint8_t enableZ;
-	uint8_t latchInterrupt;
+	bool flipX;
+	bool flipY;
+	bool flipZ;
+	bool enableX;
+	bool enableY;
+	bool enableZ;
+	bool latchInterrupt;
 };
 
 struct deviceSettings
@@ -206,36 +206,36 @@ struct deviceSettings
 struct accelSettings
 {
 	// Accelerometer settings:
-	uint8_t enabled;
-	uint8_t scale;
-	uint8_t sampleRate;
+	bool enabled;
+	accel_scale scale;
+	accel_odr sampleRate;
 	// New accel stuff:
-	uint8_t enableX;
-	uint8_t enableY;
-	uint8_t enableZ;
+	bool enableX;
+	bool enableY;
+	bool enableZ;
 	int8_t bandwidth;
-	uint8_t highResEnable;
+	bool highResEnable;
 	uint8_t highResBandwidth;
 };
 
 struct magSettings
 {
 	// Magnetometer settings:
-	uint8_t enabled;
-	uint8_t scale;
-	uint8_t sampleRate;
+	bool enabled;
+	mag_scale scale;
+	mag_odr sampleRate;
 	// New mag stuff:
-	uint8_t tempCompensationEnable;
+	bool tempCompensationEnable;
 	uint8_t XYPerformance;
 	uint8_t ZPerformance;
-	uint8_t lowPowerEnable;
+	bool lowPowerEnable;
 	uint8_t operatingMode;
 };
 
 struct temperatureSettings
 {
 	// Temperature settings
-	uint8_t enabled;
+	bool enabled;
 };
 
 struct IMUSettings
