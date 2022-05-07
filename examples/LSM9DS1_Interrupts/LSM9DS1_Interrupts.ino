@@ -41,12 +41,12 @@ to use I2C. The pin-out is as follows:
    INT1 ------------- D3
    INTM ------------- D5
    RDY -------------- D6
-(CSG, CSXM, SDOG, and SDOXM should all be pulled high. 
+(CSG, CSXM, SDOG, and SDOXM should all be pulled high.
 Jumpers on the breakout board will do this for you.)
 
 The LSM9DS1 has a maximum voltage of 3.6V. Make sure you power it
-off the 3.3V rail! I2C pins are open-drain, so you'll be 
-(mostly) safe connecting the LSM9DS1's SCL and SDA pins 
+off the 3.3V rail! I2C pins are open-drain, so you'll be
+(mostly) safe connecting the LSM9DS1's SCL and SDA pins
 directly to the Arduino.
 
 Development environment specifics:
@@ -54,8 +54,8 @@ Development environment specifics:
   Hardware Platform: SparkFun Redboard
   LSM9DS1 Breakout Version: 1.0
 
-This code is beerware. If you see me (or any other SparkFun 
-employee) at the local, and you've found our code helpful, 
+This code is beerware. If you see me (or any other SparkFun
+employee) at the local, and you've found our code helpful,
 please buy us a round!
 
 Distributed as-is; no warranty is given.
@@ -93,16 +93,16 @@ uint16_t configureIMU()
   imu.settings.gyro.latchInterrupt = false;
 
   // Set gyroscope scale to +/-245 dps:
-  imu.settings.gyro.scale = 245;
+  imu.settings.gyro.scale = G_SCALE_245DPS;
   // Set gyroscope (and accel) sample rate to 14.9 Hz
-  imu.settings.gyro.sampleRate = 1;
+  imu.settings.gyro.sampleRate = G_ODR_14_9HZ;
   // Set accelerometer scale to +/-2g
-  imu.settings.accel.scale = 2;
+  imu.settings.accel.scale = A_SCALE_2G;
   // Set magnetometer scale to +/- 4g
-  imu.settings.mag.scale = 4;
+  imu.settings.mag.scale = M_SCALE_4GS;
   // Set magnetometer sample rate to 0.625 Hz
-  imu.settings.mag.sampleRate = 0;
-  
+  imu.settings.mag.sampleRate = M_ODR_0625HZ;
+
   // Call imu.begin() to initialize the sensor and instill
   // it with our new settings.
   return imu.begin(LSM9DS1_AG_ADDR(1), LSM9DS1_M_ADDR(1), Wire); // set addresses and wire port
@@ -115,7 +115,7 @@ void configureLSM9DS1Interrupts()
   /////////////////////////////////////////////
   // For more information on setting gyro interrupt, threshold,
   // and configuring the intterup, see the datasheet.
-  // We'll configure INT_GEN_CFG_G, INT_GEN_THS_??_G, 
+  // We'll configure INT_GEN_CFG_G, INT_GEN_THS_??_G,
   // INT_GEN_DUR_G, and INT1_CTRL.
   // 1. Configure the gyro interrupt generator:
   //  - ZHIE_G: Z-axis high event (more can be or'd together)
@@ -143,7 +143,7 @@ void configureLSM9DS1Interrupts()
   imu.configAccelThs(20, X_AXIS, 1, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
-  //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
+  //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to
   //     both gyro interrupt and accel
   //   - INT_ACTIVE_LOW: Sets interrupt to active low.
   //         (Can otherwise be set to INT_ACTIVE_HIGH.)
@@ -174,10 +174,10 @@ void configureLSM9DS1Interrupts()
   //   This is the raw mag value that must be exceeded to
   //   generate an interrupt.
   imu.configMagThs(10000);
-  
+
 }
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
   // Set up our Arduino pins connected to interrupts.
@@ -207,7 +207,7 @@ void setup()
   configureLSM9DS1Interrupts();
 }
 
-void loop() 
+void loop()
 {
   // Every 1 second (1000 ms), print the last sensor values
   // that were read:

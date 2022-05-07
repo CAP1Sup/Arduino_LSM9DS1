@@ -159,11 +159,11 @@ void printGyro()
   // If you want to print calculated values, you can use the
   // calcGyro helper function to convert a raw ADC value to
   // DPS. Give the function the value that you want to convert.
-  Serial.print(imu.calcGyro(imu.gx), 2);
+  Serial.print(imu.gx, 2);
   Serial.print(", ");
-  Serial.print(imu.calcGyro(imu.gy), 2);
+  Serial.print(imu.gy, 2);
   Serial.print(", ");
-  Serial.print(imu.calcGyro(imu.gz), 2);
+  Serial.print(imu.gz, 2);
   Serial.println(" deg/s");
 #elif defined PRINT_RAW
   Serial.print(imu.gx);
@@ -183,11 +183,11 @@ void printAccel()
   // If you want to print calculated values, you can use the
   // calcAccel helper function to convert a raw ADC value to
   // g's. Give the function the value that you want to convert.
-  Serial.print(imu.calcAccel(imu.ax), 2);
+  Serial.print(imu.ax, 2);
   Serial.print(", ");
-  Serial.print(imu.calcAccel(imu.ay), 2);
+  Serial.print(imu.ay, 2);
   Serial.print(", ");
-  Serial.print(imu.calcAccel(imu.az), 2);
+  Serial.print(imu.az, 2);
   Serial.println(" g");
 #elif defined PRINT_RAW
   Serial.print(imu.ax);
@@ -208,11 +208,11 @@ void printMag()
   // If you want to print calculated values, you can use the
   // calcMag helper function to convert a raw ADC value to
   // Gauss. Give the function the value that you want to convert.
-  Serial.print(imu.calcMag(imu.mx), 2);
+  Serial.print(imu.mx, 2);
   Serial.print(", ");
-  Serial.print(imu.calcMag(imu.my), 2);
+  Serial.print(imu.my, 2);
   Serial.print(", ");
-  Serial.print(imu.calcMag(imu.mz), 2);
+  Serial.print(imu.mz, 2);
   Serial.println(" gauss");
 #elif defined PRINT_RAW
   Serial.print(imu.mx);

@@ -5,7 +5,7 @@ Jim Lindblom @ SparkFun Electronics
 Original Creation Date: August 13, 2015
 https://github.com/sparkfun/LSM9DS1_Breakout
 
-This Arduino sketch demonstrates how to configure every 
+This Arduino sketch demonstrates how to configure every
 possible configuration value in the SparkFunLSM9DS1 library.
 
 It demonstrates how to set the output data rates and scales
@@ -23,12 +23,12 @@ to use I2C. The pin-out is as follows:
    SDA ---------- SDA (A4 on older 'Duinos')
    VDD ------------- 3.3V
    GND ------------- GND
-(CSG, CSXM, SDOG, and SDOXM should all be pulled high. 
+(CSG, CSXM, SDOG, and SDOXM should all be pulled high.
 Jumpers on the breakout board will do this for you.)
 
 The LSM9DS1 has a maximum voltage of 3.6V. Make sure you power it
-off the 3.3V rail! I2C pins are open-drain, so you'll be 
-(mostly) safe connecting the LSM9DS1's SCL and SDA pins 
+off the 3.3V rail! I2C pins are open-drain, so you'll be
+(mostly) safe connecting the LSM9DS1's SCL and SDA pins
 directly to the Arduino.
 
 Development environment specifics:
@@ -36,8 +36,8 @@ Development environment specifics:
   Hardware Platform: SparkFun Redboard
   LSM9DS1 Breakout Version: 1.0
 
-This code is beerware. If you see me (or any other SparkFun 
-employee) at the local, and you've found our code helpful, 
+This code is beerware. If you see me (or any other SparkFun
+employee) at the local, and you've found our code helpful,
 please buy us a round!
 
 Distributed as-is; no warranty is given.
@@ -73,13 +73,13 @@ void setupGyro()
   imu.settings.gyro.enabled = true;  // Enable the gyro
   // [scale] sets the full-scale range of the gyroscope.
   // scale can be set to either 245, 500, or 2000
-  imu.settings.gyro.scale = 245; // Set scale to +/-245dps
+  imu.settings.gyro.scale = G_SCALE_245DPS; // Set scale to +/-245dps
   // [sampleRate] sets the output data rate (ODR) of the gyro
   // sampleRate can be set between 1-6
   // 1 = 14.9    4 = 238
   // 2 = 59.5    5 = 476
   // 3 = 119     6 = 952
-  imu.settings.gyro.sampleRate = 3; // 59.5Hz ODR
+  imu.settings.gyro.sampleRate = G_ODR_59_5HZ; // 59.5Hz ODR
   // [bandwidth] can set the cutoff frequency of the gyro.
   // Allowed values: 0-3. Actual value of cutoff frequency
   // depends on the sample rate. (Datasheet section 7.12)
@@ -111,7 +111,7 @@ void setupAccel()
   imu.settings.accel.enableZ = true; // Enable Z
   // [scale] sets the full-scale range of the accelerometer.
   // accel scale can be 2, 4, 8, or 16
-  imu.settings.accel.scale = 8; // Set accel scale to +/-8g.
+  imu.settings.accel.scale = A_SCALE_8G; // Set accel scale to +/-8g.
   // [sampleRate] sets the output data rate (ODR) of the
   // accelerometer. ONLY APPLICABLE WHEN THE GYROSCOPE IS
   // DISABLED! Otherwise accel sample rate = gyro sample rate.
@@ -119,14 +119,14 @@ void setupAccel()
   // 1 = 10 Hz    4 = 238 Hz
   // 2 = 50 Hz    5 = 476 Hz
   // 3 = 119 Hz   6 = 952 Hz
-  imu.settings.accel.sampleRate = 1; // Set accel to 10Hz.
+  imu.settings.accel.sampleRate = A_ODR_10HZ; // Set accel to 10Hz.
   // [bandwidth] sets the anti-aliasing filter bandwidth.
-  // Accel cutoff freqeuncy can be any value between -1 - 3. 
+  // Accel cutoff freqeuncy can be any value between -1 - 3.
   // -1 = bandwidth determined by sample rate
   // 0 = 408 Hz   2 = 105 Hz
   // 1 = 211 Hz   3 = 50 Hz
-  imu.settings.accel.bandwidth = 0; // BW = 408Hz
-  // [highResEnable] enables or disables high resolution 
+  imu.settings.accel.filterBandwidth = A_FBW_408HZ; // BW = 408Hz
+  // [highResEnable] enables or disables high resolution
   // mode for the acclerometer.
   imu.settings.accel.highResEnable = false; // Disable HR
   // [highResBandwidth] sets the LP cutoff frequency of
@@ -135,7 +135,7 @@ void setupAccel()
   // LP cutoff is set to a factor of sample rate
   // 0 = ODR/50    2 = ODR/9
   // 1 = ODR/100   3 = ODR/400
-  imu.settings.accel.highResBandwidth = 0;  
+  imu.settings.accel.highResBandwidth = A_FHBW_ODR_DIV_50;
 }
 
 void setupMag()
@@ -144,7 +144,7 @@ void setupMag()
   imu.settings.mag.enabled = true; // Enable magnetometer
   // [scale] sets the full-scale range of the magnetometer
   // mag scale can be 4, 8, 12, or 16
-  imu.settings.mag.scale = 12; // Set mag scale to +/-12 Gs
+  imu.settings.mag.scale = M_SCALE_12GS; // Set mag scale to +/-12 Gs
   // [sampleRate] sets the output data rate (ODR) of the
   // magnetometer.
   // mag data rate can be 0-7:
@@ -152,17 +152,17 @@ void setupMag()
   // 1 = 1.25 Hz   5 = 20 Hz
   // 2 = 2.5 Hz    6 = 40 Hz
   // 3 = 5 Hz      7 = 80 Hz
-  imu.settings.mag.sampleRate = 5; // Set OD rate to 20Hz
-  // [tempCompensationEnable] enables or disables 
+  imu.settings.mag.sampleRate = M_ODR_20HZ; // Set OD rate to 20Hz
+  // [tempCompensationEnable] enables or disables
   // temperature compensation of the magnetometer.
   imu.settings.mag.tempCompensationEnable = false;
   // [XYPerformance] sets the x and y-axis performance of the
   // magnetometer to either:
   // 0 = Low power mode      2 = high performance
   // 1 = medium performance  3 = ultra-high performance
-  imu.settings.mag.XYPerformance = 3; // Ultra-high perform.
+  imu.settings.mag.XYPerformance = MAG_ULTRA_HIGH_PERFORMANCE_MODE; // Ultra-high perform.
   // [ZPerformance] does the same thing, but only for the z
-  imu.settings.mag.ZPerformance = 3; // Ultra-high perform.
+  imu.settings.mag.ZPerformance = MAG_ULTRA_HIGH_PERFORMANCE_MODE; // Ultra-high perform.
   // [lowPowerEnable] enables or disables low power mode in
   // the magnetometer.
   imu.settings.mag.lowPowerEnable = false;
@@ -171,7 +171,7 @@ void setupMag()
   // 0 = continuous conversion
   // 1 = single-conversion
   // 2 = power down
-  imu.settings.mag.operatingMode = 0; // Continuous mode
+  imu.settings.mag.operatingMode = MAG_CONTINUOUS_MODE; // Continuous mode
 }
 
 void setupTemperature()
@@ -186,28 +186,28 @@ uint16_t initLSM9DS1()
   setupAccel(); // Set up accelerometer parameters
   setupMag(); // Set up magnetometer parameters
   setupTemperature(); // Set up temp sensor parameter
-  
+
   return imu.begin(LSM9DS1_AG, LSM9DS1_M, Wire); // for SPI use beginSPI()
 }
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
 
   Wire.begin();
-  
+
   Serial.println("Initializing the LSM9DS1");
   uint16_t status = initLSM9DS1();
   Serial.print("LSM9DS1 WHO_AM_I's returned: 0x");
   Serial.println(status, HEX);
   Serial.println("Should be 0x683D");
   Serial.println();
-  
+
   startTime = millis();
 }
 
-void loop() 
-{  
+void loop()
+{
   // imu.accelAvailable() returns 1 if new accelerometer
   // data is ready to be read. 0 otherwise.
   if (imu.accelAvailable())
@@ -215,7 +215,7 @@ void loop()
     imu.readAccel();
     accelReadCounter++;
   }
-  
+
   // imu.gyroAvailable() returns 1 if new gyroscope
   // data is ready to be read. 0 otherwise.
   if (imu.gyroAvailable())
@@ -223,7 +223,7 @@ void loop()
     imu.readGyro();
     gyroReadCounter++;
   }
-  
+
   // imu.magAvailable() returns 1 if new magnetometer
   // data is ready to be read. 0 otherwise.
   if (imu.magAvailable())
@@ -231,7 +231,7 @@ void loop()
     imu.readMag();
     magReadCounter++;
   }
-  
+
   // imu.tempAvailable() returns 1 if new temperature sensor
   // data is ready to be read. 0 otherwise.
   if (imu.tempAvailable())
@@ -258,29 +258,29 @@ void printSensorReadings()
   float magRate = (float)magReadCounter / runTime;
   float tempRate = (float)tempReadCounter / runTime;
   Serial.print("A: ");
-  Serial.print(imu.calcAccel(imu.ax));
+  Serial.print(imu.ax);
   Serial.print(", ");
-  Serial.print(imu.calcAccel(imu.ay));
+  Serial.print(imu.ay);
   Serial.print(", ");
-  Serial.print(imu.calcAccel(imu.az));
+  Serial.print(imu.az);
   Serial.print(" g \t| ");
   Serial.print(accelRate);
   Serial.println(" Hz");
   Serial.print("G: ");
-  Serial.print(imu.calcGyro(imu.gx));
+  Serial.print(imu.gx);
   Serial.print(", ");
-  Serial.print(imu.calcGyro(imu.gy));
+  Serial.print(imu.gy);
   Serial.print(", ");
-  Serial.print(imu.calcGyro(imu.gz));
+  Serial.print(imu.gz);
   Serial.print(" dps \t| ");
   Serial.print(gyroRate);
   Serial.println(" Hz");
   Serial.print("M: ");
-  Serial.print(imu.calcMag(imu.mx));
+  Serial.print(imu.mx);
   Serial.print(", ");
-  Serial.print(imu.calcMag(imu.my));
+  Serial.print(imu.my);
   Serial.print(", ");
-  Serial.print(imu.calcMag(imu.mz));
+  Serial.print(imu.mz);
   Serial.print(" Gs \t| ");
   Serial.print(magRate);
   Serial.println(" Hz");
@@ -288,6 +288,6 @@ void printSensorReadings()
   Serial.print(imu.temperature);
   Serial.print(" \t\t\t| ");
   Serial.print(tempRate);
-  Serial.println(" Hz");  
+  Serial.println(" Hz");
   Serial.println();
 }

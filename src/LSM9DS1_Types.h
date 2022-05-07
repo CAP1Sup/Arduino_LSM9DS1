@@ -64,8 +64,8 @@ enum gyro_odr
 {
 	//! TODO
 	G_ODR_PD    = 0, // Power down (0)
-	G_ODR_149HZ = 1, // 14.9 Hz (1)
-	G_ODR_595HZ = 2, // 59.5 Hz (2)
+	G_ODR_14_9HZ = 1, // 14.9 Hz (1)
+	G_ODR_59_5HZ = 2, // 59.5 Hz (2)
 	G_ODR_119HZ = 3, // 119 Hz (3)
 	G_ODR_238HZ = 4, // 238 Hz (4)
 	G_ODR_476HZ = 5, // 476 Hz (5)

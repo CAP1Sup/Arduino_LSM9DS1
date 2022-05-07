@@ -15,12 +15,12 @@ SFE_LSM9DS1 library. It'll demo the following:
   variables section).
 * How to use the begin() function of the LSM9DS1 class.
 * How to read the gyroscope, accelerometer, and magnetometer
-  using the readGryo(), readAccel(), readMag() functions and 
+  using the readGryo(), readAccel(), readMag() functions and
   the gx, gy, gz, ax, ay, az, mx, my, and mz variables.
-* How to calculate actual acceleration, rotation speed, 
-  magnetic field strength using the calcAccel(), calcGyro() 
+* How to calculate actual acceleration, rotation speed,
+  magnetic field strength using the calcAccel(), calcGyro()
   and calcMag() functions.
-* How to use the data from the LSM9DS1 to calculate 
+* How to use the data from the LSM9DS1 to calculate
   orientation and heading.
 
 Hardware setup: This example demonstrates how to use the
@@ -47,8 +47,8 @@ Development environment specifics:
 	Hardware Platform: Arduino Pro 3.3V
 	LSM9DS1 Breakout Version: 1.0
 
-This code is beerware. If you see me (or any other SparkFun 
-employee) at the local, and you've found our code helpful, 
+This code is beerware. If you see me (or any other SparkFun
+employee) at the local, and you've found our code helpful,
 please buy us a round!
 
 Distributed as-is; no warranty is given.
@@ -81,8 +81,8 @@ LSM9DS1 imu;
 //#define PRINT_RAW
 #define PRINT_SPEED 250 // 250 ms between prints
 
-// Earth's magnetic field varies by location. Add or subtract 
-// a declination to get a more accurate heading. Calculate 
+// Earth's magnetic field varies by location. Add or subtract
+// a declination to get a more accurate heading. Calculate
 // your's here:
 // http://www.ngdc.noaa.gov/geomag-web/#declination
 #define DECLINATION -8.58 // Declination (degrees) in Boulder, CO.
@@ -93,10 +93,10 @@ void printAccel();
 void printMag();
 void printAttitude(float ax, float ay, float az, float mx, float my, float mz);
 
-void setup() 
+void setup()
 {
   Serial.begin(115200);
- 
+
   // imu.beginSPI(), which verifies communication with the IMU
   // and turns it on.
   if (imu.beginSPI(LSM9DS1_AG_CS, LSM9DS1_M_CS) == false) // note, we need to sent this our CS pins (defined above)
@@ -117,14 +117,14 @@ void loop()
   printGyro();  // Print "G: gx, gy, gz"
   printAccel(); // Print "A: ax, ay, az"
   printMag();   // Print "M: mx, my, mz"
-  
+
   // Print the heading and orientation for fun!
   // Call print attitude. The LSM9DS1's magnetometer x and y
   // axes are opposite to the accelerometer, so my and mx are
   // substituted for each other.
   printAttitude(imu.ax, imu.ay, imu.az, -imu.my, -imu.mx, imu.mz);
   Serial.println();
-  
+
   delay(PRINT_SPEED);
 }
 
@@ -134,7 +134,7 @@ void printGyro()
   // readGyro() function. When this exits, it'll update the
   // gx, gy, and gz variables with the most current data.
   imu.readGyro();
-  
+
   // Now we can use the gx, gy, and gz variables as we please.
   // Either print them as raw ADC values, or calculated in DPS.
   Serial.print("G: ");
@@ -142,11 +142,11 @@ void printGyro()
   // If you want to print calculated values, you can use the
   // calcGyro helper function to convert a raw ADC value to
   // DPS. Give the function the value that you want to convert.
-  Serial.print(imu.calcGyro(imu.gx), 2);
+  Serial.print(imu.gx, 2);
   Serial.print(", ");
-  Serial.print(imu.calcGyro(imu.gy), 2);
+  Serial.print(imu.gy, 2);
   Serial.print(", ");
-  Serial.println(imu.calcGyro(imu.gz), 2);
+  Serial.println(imu.gz, 2);
 #elif defined PRINT_RAW
   Serial.print(imu.gx);
   Serial.print(", ");
@@ -162,7 +162,7 @@ void printAccel()
   // readAccel() function. When this exits, it'll update the
   // ax, ay, and az variables with the most current data.
   imu.readAccel();
-  
+
   // Now we can use the ax, ay, and az variables as we please.
   // Either print them as raw ADC values, or calculated in g's.
   Serial.print("A: ");
@@ -170,12 +170,12 @@ void printAccel()
   // If you want to print calculated values, you can use the
   // calcAccel helper function to convert a raw ADC value to
   // g's. Give the function the value that you want to convert.
-  Serial.print(imu.calcAccel(imu.ax), 2);
+  Serial.print(imu.ax, 2);
   Serial.print(", ");
-  Serial.print(imu.calcAccel(imu.ay), 2);
+  Serial.print(imu.ay, 2);
   Serial.print(", ");
-  Serial.println(imu.calcAccel(imu.az), 2);
-#elif defined PRINT_RAW 
+  Serial.println(imu.az, 2);
+#elif defined PRINT_RAW
   Serial.print(imu.ax);
   Serial.print(", ");
   Serial.print(imu.ay);
@@ -191,7 +191,7 @@ void printMag()
   // readMag() function. When this exits, it'll update the
   // mx, my, and mz variables with the most current data.
   imu.readMag();
-  
+
   // Now we can use the mx, my, and mz variables as we please.
   // Either print them as raw ADC values, or calculated in Gauss.
   Serial.print("M: ");
@@ -199,11 +199,11 @@ void printMag()
   // If you want to print calculated values, you can use the
   // calcMag helper function to convert a raw ADC value to
   // Gauss. Give the function the value that you want to convert.
-  Serial.print(imu.calcMag(imu.mx), 2);
+  Serial.print(imu.mx, 2);
   Serial.print(", ");
-  Serial.print(imu.calcMag(imu.my), 2);
+  Serial.print(imu.my, 2);
   Serial.print(", ");
-  Serial.println(imu.calcMag(imu.mz), 2);
+  Serial.println(imu.mz, 2);
 #elif defined PRINT_RAW
   Serial.print(imu.mx);
   Serial.print(", ");
@@ -222,23 +222,23 @@ void printAttitude(float ax, float ay, float az, float mx, float my, float mz)
 {
   float roll = atan2(ay, az);
   float pitch = atan2(-ax, sqrt(ay * ay + az * az));
-  
+
   float heading;
   if (my == 0)
     heading = (mx < 0) ? PI : 0;
   else
     heading = atan2(mx, my);
-    
+
   heading -= DECLINATION * PI / 180;
-  
+
   if (heading > PI) heading -= (2 * PI);
   else if (heading < -PI) heading += (2 * PI);
-  
+
   // Convert everything from radians to degrees:
   heading *= 180.0 / PI;
   pitch *= 180.0 / PI;
   roll  *= 180.0 / PI;
-  
+
   Serial.print("Pitch, Roll: ");
   Serial.print(pitch, 2);
   Serial.print(", ");
