@@ -35,11 +35,13 @@ Distributed as-is; no warranty is given.
 #define LSM9DS1_AG_ADDR(sa0)	((sa0) == 0 ? 0x6A : 0x6B)
 #define LSM9DS1_M_ADDR(sa1)		((sa1) == 0 ? 0x1C : 0x1E)
 
+#define READ_BIT(raw, bitPos) ((raw >> bitPos) & 0x01)
+
 enum lsm9ds1_axis {
-	X_AXIS,
-	Y_AXIS,
-	Z_AXIS,
-	ALL_AXIS
+	X_AXIS   = 0,
+	Y_AXIS   = 1,
+	Z_AXIS   = 2,
+	ALL_AXIS = 3,
 };
 
 class LSM9DS1
@@ -116,19 +118,19 @@ public:
 	// if new data is available.
 	// Output:	1 - New data available
 	//			0 - No new data available
-	uint8_t accelAvailable();
+	bool accelAvailable();
 
 	// gyroAvailable() -- Polls the gyroscope status register to check
 	// if new data is available.
 	// Output:	1 - New data available
 	//			0 - No new data available
-	uint8_t gyroAvailable();
+	bool gyroAvailable();
 
 	// tempAvailable() -- Polls the temperature status register to check
 	// if new data is available.
 	// Output:	1 - New data available
 	//			0 - No new data available
-	uint8_t tempAvailable();
+	bool tempAvailable();
 
 	// magAvailable() -- Polls the accelerometer status register to check
 	// if new data is available.
@@ -138,14 +140,14 @@ public:
 	//	  on all axes.
 	// Output:	1 - New data available
 	//			0 - No new data available
-	uint8_t magAvailable(lsm9ds1_axis axis = ALL_AXIS);
+	bool magAvailable(lsm9ds1_axis axis = ALL_AXIS);
 
 	// readRawGyro() -- Read the gyroscope output registers.
 	// This function will read all six gyroscope output registers.
 	// The readings are stored in the class' gx, gy, and gz variables. Read
 	// those _after_ calling readGyro().
 	void readRawGyro();
-	void readGyro();
+	void readGyro(bool biasCorrection = true);
 
 	// int16_t readRawGyro(axis) -- Read a specific axis of the gyroscope.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
@@ -154,14 +156,14 @@ public:
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
 	int16_t readRawGyro(lsm9ds1_axis axis);
-	float readGyro(lsm9ds1_axis axis);
+	float readGyro(lsm9ds1_axis axis, bool biasCorrection = true);
 
 	// readRawAccel() -- Read the accelerometer output registers.
 	// This function will read all six accelerometer output registers.
 	// The readings are stored in the class' ax, ay, and az variables. Read
 	// those _after_ calling readAccel().
 	void readRawAccel();
-	void readAccel();
+	void readAccel(bool biasCorrection = true);
 
 	// int16_t readRawAccel(axis) -- Read a specific axis of the accelerometer.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
@@ -170,14 +172,14 @@ public:
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
 	int16_t readRawAccel(lsm9ds1_axis axis);
-	float readAccel(lsm9ds1_axis axis);
+	float readAccel(lsm9ds1_axis axis, bool biasCorrection = true);
 
 	// readRawMag() -- Read the magnetometer output registers.
 	// This function will read all six magnetometer output registers.
 	// The readings are stored in the class' mx, my, and mz variables. Read
 	// those _after_ calling readMag().
 	void readRawMag();
-	void readMag();
+	void readMag(bool biasCorrection = true);
 
 	// int16_t readRawMag(axis) -- Read a specific axis of the magnetometer.
 	// [axis] can be any of X_AXIS, Y_AXIS, or Z_AXIS.
@@ -186,7 +188,7 @@ public:
 	// Output:
 	//	A 16-bit signed integer with sensor data on requested axis.
 	int16_t readRawMag(lsm9ds1_axis axis);
-	float readMag(lsm9ds1_axis axis);
+	float readMag(lsm9ds1_axis axis, bool biasCorrection = true);
 
 	// readRawTemp() -- Read the temperature output register.
 	// This function will read two temperature output registers.

@@ -316,10 +316,10 @@ void LSM9DS1::initAccel()
 	}
 	// Set the scale value
 	tempRegValue |= (settings.accel.scale << 3);
-	if (settings.accel.bandwidth != A_FBW_SAMPLE_RATE)
+	if (settings.accel.filterBandwidth != A_FBW_SAMPLE_RATE)
 	{
 		tempRegValue |= (1<<2); // Set BW_SCAL_ODR
-		tempRegValue |= settings.accel.bandwidth;
+		tempRegValue |= settings.accel.filterBandwidth;
 	}
 	xgWriteByte(CTRL_REG6_XL, tempRegValue);
 
@@ -351,6 +351,7 @@ void LSM9DS1::initAccel()
 */
 void LSM9DS1::calibrate()
 {
+	/*
 	uint8_t sampleCount = 0;
 	int32_t aBiasRawTemp[3] = {0, 0, 0};
 	int32_t gBiasRawTemp[3] = {0, 0, 0};
@@ -390,10 +391,12 @@ void LSM9DS1::calibrate()
 	// No need for FIFO anymore, disable it
 	enableFIFO(false);
 	setFIFO(FIFO_OFF, 0x00);
+	*/
 }
 
 void LSM9DS1::calibrateMag()
 {
+	/*
 	int i, j;
 	int16_t magMin[3] = {0, 0, 0};
 	int16_t magMax[3] = {0, 0, 0};
@@ -420,7 +423,7 @@ void LSM9DS1::calibrateMag()
 		if (loadIn)
 			magOffset(j, mBiasRaw[j]);
 	}
-
+	*/
 }
 
 void LSM9DS1::initMag()
@@ -529,24 +532,24 @@ void LSM9DS1::setMagSlope(float x, float y, float z)
    mSlopeBias[2] = z;
 }
 
-uint8_t LSM9DS1::accelAvailable()
+bool LSM9DS1::accelAvailable()
 {
-	return (xgReadByte(STATUS_REG_1) & (1<<0));
+	return READ_BIT(xgReadByte(STATUS_REG_1), 0);
 }
 
-uint8_t LSM9DS1::gyroAvailable()
+bool LSM9DS1::gyroAvailable()
 {
-	return ((xgReadByte(STATUS_REG_1) & (1<<1)) >> 1);
+	return READ_BIT(xgReadByte(STATUS_REG_1), 1);
 }
 
-uint8_t LSM9DS1::tempAvailable()
+bool LSM9DS1::tempAvailable()
 {
-	return ((xgReadByte(STATUS_REG_1) & (1<<2)) >> 2);
+	return READ_BIT(xgReadByte(STATUS_REG_1), 2);
 }
 
-uint8_t LSM9DS1::magAvailable(lsm9ds1_axis axis)
+bool LSM9DS1::magAvailable(lsm9ds1_axis axis)
 {
-	return ((mReadByte(STATUS_REG_M) & (1<<axis)) >> axis);
+	return READ_BIT(mReadByte(STATUS_REG_M), axis);
 }
 
 void LSM9DS1::readRawAccel()
@@ -557,6 +560,22 @@ void LSM9DS1::readRawAccel()
 		raw_ax = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
 		raw_ay = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
 		raw_az = (temp[5] << 8) | temp[4]; // Store z-axis values into az
+	}
+}
+
+void LSM9DS1::readAccel(bool biasCorrection) {
+	readRawAccel();
+
+	// Apply bias and scaling (if specified)
+	if (biasCorrection) {
+		ax = ((raw_ax * aRes) - aOffsetBias[0]) * aSlopeBias[0];
+		ay = ((raw_ay * aRes) - aOffsetBias[1]) * aSlopeBias[1];
+		az = ((raw_az * aRes) - aOffsetBias[2]) * aSlopeBias[2];
+	}
+	else {
+		ax = raw_ax * aRes;
+		ay = raw_ay * aRes;
+		az = raw_az * aRes;
 	}
 }
 
@@ -572,6 +591,15 @@ int16_t LSM9DS1::readRawAccel(lsm9ds1_axis axis)
 	return 0;
 }
 
+float LSM9DS1::readAccel(lsm9ds1_axis axis, bool biasCorrection) {
+	if (biasCorrection) {
+		return ((readRawAccel(axis) * aRes) - aOffsetBias[axis]) * aSlopeBias[axis];
+	}
+	else {
+		return readRawAccel(axis) * aRes;
+	}
+}
+
 void LSM9DS1::readRawMag()
 {
 	uint8_t temp[6]; // We'll read six bytes from the mag into temp
@@ -583,6 +611,22 @@ void LSM9DS1::readRawMag()
 	}
 }
 
+void LSM9DS1::readMag(bool biasCorrection) {
+	readRawMag();
+
+	// Apply bias and scaling (if specified)
+	if (biasCorrection) {
+		mx = ((raw_mx * mRes) - mOffsetBias[0]) * mSlopeBias[0];
+		my = ((raw_my * mRes) - mOffsetBias[1]) * mSlopeBias[1];
+		mz = ((raw_mz * mRes) - mOffsetBias[2]) * mSlopeBias[2];
+	}
+	else {
+		mx = raw_mx * mRes;
+		my = raw_my * mRes;
+		mz = raw_mz * mRes;
+	}
+}
+
 int16_t LSM9DS1::readRawMag(lsm9ds1_axis axis)
 {
 	uint8_t temp[2];
@@ -591,6 +635,15 @@ int16_t LSM9DS1::readRawMag(lsm9ds1_axis axis)
 		return (temp[1] << 8) | temp[0];
 	}
 	return 0;
+}
+
+float LSM9DS1::readMag(lsm9ds1_axis axis, bool biasCorrection) {
+	if (biasCorrection) {
+		return ((readRawMag(axis) * mRes) - mOffsetBias[axis]) * mSlopeBias[axis];
+	}
+	else {
+		return readRawMag(axis) * mRes;
+	}
 }
 
 typedef union
@@ -624,6 +677,22 @@ void LSM9DS1::readRawGyro()
 		raw_gx = (temp[1] << 8) | temp[0]; // Store x-axis values into gx
 		raw_gy = (temp[3] << 8) | temp[2]; // Store y-axis values into gy
 		raw_gz = (temp[5] << 8) | temp[4]; // Store z-axis values into gz
+	}
+}
+
+void LSM9DS1::readGyro(bool biasCorrection) {
+	readRawGyro();
+
+	// Apply bias and scaling (if specified)
+	if (biasCorrection) {
+		gx = ((raw_gx * gRes) - gOffsetBias[0]) * gSlopeBias[0];
+		gy = ((raw_gy * gRes) - gOffsetBias[1]) * gSlopeBias[1];
+		gz = ((raw_gz * gRes) - gOffsetBias[2]) * gSlopeBias[2];
+	}
+	else {
+		gx = raw_gx * gRes;
+		gy = raw_gy * gRes;
+		gz = raw_gz * gRes;
 	}
 }
 
@@ -687,7 +756,7 @@ void LSM9DS1::setMagScale(mag_scale mScl)
 	ctrl2Reg |= (mScl << 5);
 
 	// And write the new register value back into CTRL_REG6_XM:
-	mWriteByte(CTRL_REG2_M, temp);
+	mWriteByte(CTRL_REG2_M, ctrl2Reg);
 
 	// Update the LSB to gauss ratio
 	calcmRes();
@@ -975,7 +1044,7 @@ void LSM9DS1::setFIFO(fifoMode_type fifoMode, uint8_t fifoThs)
 	// Limit threshold - 0x1F (31) is the maximum. If more than that was asked
 	// limit it to the maximum.
 	uint8_t threshold = fifoThs <= 0x1F ? fifoThs : 0x1F;
-	xgWriteByte(FIFO_CTRL, ((fifoMode << 5) | (threshold & 0b00011111));
+	xgWriteByte(FIFO_CTRL, ((fifoMode << 5) | (threshold & 0b00011111)));
 }
 
 uint8_t LSM9DS1::getFIFOSamples()
