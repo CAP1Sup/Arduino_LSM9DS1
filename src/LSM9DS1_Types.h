@@ -83,13 +83,23 @@ enum accel_odr
 	A_ODR_952HZ = 6	 // 952 Hz (6)
 };
 
-// accel_abw defines all possible anti-aliasing filter rates of the accelerometer:
-enum accel_abw
+// accel_filter_bw defines all possible anti-aliasing filter rates of the accelerometer:
+enum accel_filter_bw
 {
-	A_ABW_408HZ = 0, // 408 Hz (0)
-	A_ABW_211HZ = 1, // 211 Hz (1)
-	A_ABW_105HZ = 2, // 105 Hz (2)
-	A_ABW_50HZ  = 3, //  50 Hz (3)
+	A_FBW_SAMPLE_RATE = -1, // Uses the sample rate set (-1)
+	A_FBW_408HZ       = 0, // 408 Hz (0)
+	A_FBW_211HZ       = 1, // 211 Hz (1)
+	A_FBW_105HZ       = 2, // 105 Hz (2)
+	A_FBW_50HZ        = 3, //  50 Hz (3)
+};
+
+// accel_hres_bw defines all possible low pass filter rates of the accelerometer
+enum accel_hres_bw
+{
+	A_FHBW_ODR_DIV_50  = 0, // The output data rate / 50
+	A_FHBW_ODR_DIV_100 = 1, // The output data rate / 100
+	A_FHBW_ODR_DIV_9   = 2, // The output data rate / 9
+	A_FHBW_ODR_DIV_400 = 3, // The output data rate / 400
 };
 
 // mag_odr defines all possible output data rates of the magnetometer:
@@ -103,6 +113,23 @@ enum mag_odr
 	M_ODR_20HZ   = 5, // 20 Hz (5)
 	M_ODR_40HZ   = 6, // 40 Hz (6)
 	M_ODR_80HZ   = 7  // 80 Hz (7)
+};
+
+// mag_axis_op_mode defines all possible mag axis operation modes
+enum mag_axis_op_mode
+{
+	MAG_LOW_POWER_MODE              = 0, // Low power mode
+	MAG_MED_PERFORMANCE_MODE        = 1, // Medium performance mode
+	MAG_HIGH_PERFORMANCE_MODE       = 2, // High performance mode
+	MAG_ULTRA_HIGH_PERFORMANCE_MODE = 3 // Ultra-high performance mode
+};
+
+// mag_op_mode defines all possible mag operation modes
+enum mag_op_mode
+{
+	MAG_CONTINUOUS_MODE = 0, // Continuous mode
+	MAG_SINGLE_MODE     = 1, // Single mode
+	MAG_POWER_DOWN_MODE = 2 // Idle mode
 };
 
 enum interrupt_select
@@ -197,10 +224,10 @@ struct gyroSettings
 
 struct deviceSettings
 {
-	uint8_t commInterface; // Can be I2C, SPI 4-wire or SPI 3-wire
+	interface_mode commInterface; // Can be I2C, SPI 4-wire or SPI 3-wire
 	uint8_t agAddress;	 // I2C address or SPI CS pin
 	uint8_t mAddress;	  // I2C address or SPI CS pin
-  TwoWire* i2c;    // pointer to an instance of I2C interface
+    TwoWire* i2c;    // pointer to an instance of I2C interface
 };
 
 struct accelSettings
@@ -213,9 +240,9 @@ struct accelSettings
 	bool enableX;
 	bool enableY;
 	bool enableZ;
-	int8_t bandwidth;
+	accel_filter_bw filterBandwidth;
 	bool highResEnable;
-	uint8_t highResBandwidth;
+	accel_hres_bw highResBandwidth;
 };
 
 struct magSettings
@@ -226,10 +253,10 @@ struct magSettings
 	mag_odr sampleRate;
 	// New mag stuff:
 	bool tempCompensationEnable;
-	uint8_t XYPerformance;
-	uint8_t ZPerformance;
+	mag_axis_op_mode XYPerformance;
+	mag_axis_op_mode ZPerformance;
 	bool lowPowerEnable;
-	uint8_t operatingMode;
+	mag_op_mode operatingMode;
 };
 
 struct temperatureSettings

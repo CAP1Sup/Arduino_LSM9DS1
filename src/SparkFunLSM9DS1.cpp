@@ -36,17 +36,17 @@ Distributed as-is; no warranty is given.
 // Sensor Sensitivity Constants
 // Values set according to the typical specifications provided in
 // table 3 of the LSM9DS1 datasheet. (pg 12)
-#define SENSITIVITY_ACCELEROMETER_2  0.0000610352F
-#define SENSITIVITY_ACCELEROMETER_4  0.0001220703F
-#define SENSITIVITY_ACCELEROMETER_8  0.0002441406F
-#define SENSITIVITY_ACCELEROMETER_16 0.0004882813F
-#define SENSITIVITY_GYROSCOPE_245    0.0074768066F
-#define SENSITIVITY_GYROSCOPE_500    0.0152587891F
-#define SENSITIVITY_GYROSCOPE_2000   0.0610351563F
-#define SENSITIVITY_MAGNETOMETER_4   SENSITIVITY_ACCELEROMETER_4
-#define SENSITIVITY_MAGNETOMETER_8   SENSITIVITY_ACCELEROMETER_8
-#define SENSITIVITY_MAGNETOMETER_12  0.0003662109F
-#define SENSITIVITY_MAGNETOMETER_16  SENSITIVITY_ACCELEROMETER_16
+#define SENSITIVITY_ACCELEROMETER_2G  0.0000610352F
+#define SENSITIVITY_ACCELEROMETER_4G  0.0001220703F
+#define SENSITIVITY_ACCELEROMETER_8G  0.0002441406F
+#define SENSITIVITY_ACCELEROMETER_16G 0.0004882813F
+#define SENSITIVITY_GYROSCOPE_245DPS  0.0074768066F
+#define SENSITIVITY_GYROSCOPE_500DPS  0.0152587891F
+#define SENSITIVITY_GYROSCOPE_2000DPS 0.0610351563F
+#define SENSITIVITY_MAGNETOMETER_4G   SENSITIVITY_ACCELEROMETER_4G
+#define SENSITIVITY_MAGNETOMETER_8G   SENSITIVITY_ACCELEROMETER_8G
+#define SENSITIVITY_MAGNETOMETER_12G  0.0003662109F
+#define SENSITIVITY_MAGNETOMETER_16G  SENSITIVITY_ACCELEROMETER_16G
 
 LSM9DS1::LSM9DS1()
 {
@@ -59,12 +59,7 @@ void LSM9DS1::init()
 	settings.gyro.enableX = true;
 	settings.gyro.enableY = true;
 	settings.gyro.enableZ = true;
-	// gyro scale can be 245, 500, or 2000
 	settings.gyro.scale = G_SCALE_245DPS;
-	// gyro sample rate: value between 1-6
-	// 1 = 14.9    4 = 238
-	// 2 = 59.5    5 = 476
-	// 3 = 119     6 = 952
 	settings.gyro.sampleRate = G_ODR_952HZ;
 	// gyro cutoff frequency: value between 0-3
 	// Actual value of cutoff frequency depends
@@ -89,46 +84,20 @@ void LSM9DS1::init()
 	settings.accel.enableX = true;
 	settings.accel.enableY = true;
 	settings.accel.enableZ = true;
-	// accel scale can be 2, 4, 8, or 16
 	settings.accel.scale = A_SCALE_2G;
-	// accel sample rate can be 1-6
-	// 1 = 10 Hz    4 = 238 Hz
-	// 2 = 50 Hz    5 = 476 Hz
-	// 3 = 119 Hz   6 = 952 Hz
 	settings.accel.sampleRate = A_ODR_952HZ;
-	// Accel cutoff frequency can be any value between -1 - 3.
-	// -1 = bandwidth determined by sample rate
-	// 0 = 408 Hz   2 = 105 Hz
-	// 1 = 211 Hz   3 = 50 Hz
-	settings.accel.bandwidth = -1;
+	settings.accel.filterBandwidth = A_FBW_SAMPLE_RATE;
 	settings.accel.highResEnable = false;
-	// accelHighResBandwidth can be any value between 0-3
-	// LP cutoff is set to a factor of sample rate
-	// 0 = ODR/50    2 = ODR/9
-	// 1 = ODR/100   3 = ODR/400
-	settings.accel.highResBandwidth = 0;
+	settings.accel.highResBandwidth = A_FHBW_ODR_DIV_50;
 
 	settings.mag.enabled = true;
-	// mag scale can be 4, 8, 12, or 16
 	settings.mag.scale = M_SCALE_4GS;
-	// mag data rate can be 0-7
-	// 0 = 0.625 Hz  4 = 10 Hz
-	// 1 = 1.25 Hz   5 = 20 Hz
-	// 2 = 2.5 Hz    6 = 40 Hz
-	// 3 = 5 Hz      7 = 80 Hz
 	settings.mag.sampleRate = M_ODR_80HZ;
 	settings.mag.tempCompensationEnable = false;
-	// magPerformance can be any value between 0-3
-	// 0 = Low power mode      2 = high performance
-	// 1 = medium performance  3 = ultra-high performance
-	settings.mag.XYPerformance = 3;
-	settings.mag.ZPerformance = 3;
+	settings.mag.XYPerformance = MAG_ULTRA_HIGH_PERFORMANCE_MODE;
+	settings.mag.ZPerformance = MAG_ULTRA_HIGH_PERFORMANCE_MODE;
 	settings.mag.lowPowerEnable = false;
-	// magOperatingMode can be 0-2
-	// 0 = continuous conversion
-	// 1 = single-conversion
-	// 2 = power down
-	settings.mag.operatingMode = 0;
+	settings.mag.operatingMode = MAG_CONTINUOUS_MODE;
 
 	settings.temp.enabled = true;
 
@@ -263,18 +232,9 @@ void LSM9DS1::initGyro()
 	// rate if the gyro is enabled.
 	if (settings.gyro.enabled)
 	{
-		tempRegValue = (settings.gyro.sampleRate & 0x07) << 5;
+		tempRegValue = (settings.gyro.sampleRate << 5);
 	}
-	switch (settings.gyro.scale)
-	{
-		case G_SCALE_500DPS:
-			tempRegValue |= (0x1 << 3);
-			break;
-		case G_SCALE_2000DPS:
-			tempRegValue |= (0x3 << 3);
-			break;
-		// Otherwise we'll set it to 245 dps (0x0 << 4)
-	}
+	tempRegValue |= (settings.gyro.scale << 3);
 	tempRegValue |= (settings.gyro.bandwidth & 0x3);
 	xgWriteByte(CTRL_REG1_G, tempRegValue);
 
@@ -352,25 +312,14 @@ void LSM9DS1::initAccel()
 	// To disable the accel, set the sampleRate bits to 0.
 	if (settings.accel.enabled)
 	{
-		tempRegValue |= (settings.accel.sampleRate & 0x07) << 5;
+		tempRegValue |= (settings.accel.sampleRate << 5);
 	}
-	switch (settings.accel.scale)
-	{
-		case A_SCALE_4G:
-			tempRegValue |= (0x2 << 3);
-			break;
-		case A_SCALE_8G:
-			tempRegValue |= (0x3 << 3);
-			break;
-		case A_SCALE_16G:
-			tempRegValue |= (0x1 << 3);
-			break;
-		// Otherwise it'll be set to 2g (0x0 << 3)
-	}
-	if (settings.accel.bandwidth >= 0)
+	// Set the scale value
+	tempRegValue |= (settings.accel.scale << 3);
+	if (settings.accel.bandwidth != A_FBW_SAMPLE_RATE)
 	{
 		tempRegValue |= (1<<2); // Set BW_SCAL_ODR
-		tempRegValue |= (settings.accel.bandwidth & 0x03);
+		tempRegValue |= settings.accel.bandwidth;
 	}
 	xgWriteByte(CTRL_REG6_XL, tempRegValue);
 
@@ -384,7 +333,7 @@ void LSM9DS1::initAccel()
 	if (settings.accel.highResEnable)
 	{
 		tempRegValue |= (1<<7); // Set HR bit
-		tempRegValue |= (settings.accel.highResBandwidth & 0x3) << 5;
+		tempRegValue |= (settings.accel.highResBandwidth << 5);
 	}
 	xgWriteByte(CTRL_REG7_XL, tempRegValue);
 }
@@ -487,8 +436,8 @@ void LSM9DS1::initMag()
 	// DO[2:0] - Output data rate selection
 	// ST - Self-test enable
 	if (settings.mag.tempCompensationEnable) tempRegValue |= (1<<7);
-	tempRegValue |= (settings.mag.XYPerformance & 0x3) << 5;
-	tempRegValue |= (settings.mag.sampleRate & 0x7) << 2;
+	tempRegValue |= (settings.mag.XYPerformance << 5);
+	tempRegValue |= (settings.mag.sampleRate << 2);
 	mWriteByte(CTRL_REG1_M, tempRegValue);
 
 	// CTRL_REG2_M (Default value 0x00)
@@ -496,21 +445,8 @@ void LSM9DS1::initMag()
 	// FS[1:0] - Full-scale configuration
 	// REBOOT - Reboot memory content (0:normal, 1:reboot)
 	// SOFT_RST - Reset config and user registers (0:default, 1:reset)
-	tempRegValue = 0;
-	switch (settings.mag.scale)
-	{
-	case M_SCALE_8GS:
-		tempRegValue |= (0x1 << 5);
-		break;
-	case M_SCALE_12GS:
-		tempRegValue |= (0x2 << 5);
-		break;
-	case M_SCALE_16GS:
-		tempRegValue |= (0x3 << 5);
-		break;
-	// Otherwise we'll default to 4 gauss (00)
-	}
-	mWriteByte(CTRL_REG2_M, tempRegValue); // +/-4Gauss
+	tempRegValue = (settings.mag.scale << 5);
+	mWriteByte(CTRL_REG2_M, tempRegValue);
 
 	// CTRL_REG3_M (Default value: 0x03)
 	// [I2C_DISABLE][0][LP][0][0][SIM][MD1][MD0]
@@ -522,7 +458,7 @@ void LSM9DS1::initMag()
 	//  10,11: Power-down
 	tempRegValue = 0;
 	if (settings.mag.lowPowerEnable) tempRegValue |= (1<<5);
-	tempRegValue |= (settings.mag.operatingMode & 0x3);
+	tempRegValue |= settings.mag.operatingMode;
 	mWriteByte(CTRL_REG3_M, tempRegValue); // Continuous conversion mode
 
 	// CTRL_REG4_M (Default value: 0x00)
@@ -532,7 +468,7 @@ void LSM9DS1::initMag()
 	//	10:high performance, 10:ultra-high performance
 	// BLE - Big/little endian data
 	tempRegValue = 0;
-	tempRegValue = (settings.mag.ZPerformance & 0x3) << 2;
+	tempRegValue = (settings.mag.ZPerformance << 2);
 	mWriteByte(CTRL_REG4_M, tempRegValue);
 
 	// CTRL_REG5_M (Default value: 0x00)
@@ -618,9 +554,9 @@ void LSM9DS1::readRawAccel()
 	uint8_t temp[6]; // We'll read six bytes from the accelerometer into temp
 	if ( xgReadBytes(OUT_X_L_XL, temp, 6) == 6 ) // Read 6 bytes, beginning at OUT_X_L_XL
 	{
-		ax = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
-		ay = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
-		az = (temp[5] << 8) | temp[4]; // Store z-axis values into az
+		raw_ax = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
+		raw_ay = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
+		raw_az = (temp[5] << 8) | temp[4]; // Store z-axis values into az
 	}
 }
 
@@ -641,9 +577,9 @@ void LSM9DS1::readRawMag()
 	uint8_t temp[6]; // We'll read six bytes from the mag into temp
 	if ( mReadBytes(OUT_X_L_M, temp, 6) == 6) // Read 6 bytes, beginning at OUT_X_L_M
 	{
-		mx = (temp[1] << 8) | temp[0]; // Store x-axis values into mx
-		my = (temp[3] << 8) | temp[2]; // Store y-axis values into my
-		mz = (temp[5] << 8) | temp[4]; // Store z-axis values into mz
+		raw_mx = (temp[1] << 8) | temp[0]; // Store x-axis values into mx
+		raw_my = (temp[3] << 8) | temp[2]; // Store y-axis values into my
+		raw_mz = (temp[5] << 8) | temp[4]; // Store z-axis values into mz
 	}
 }
 
@@ -685,9 +621,9 @@ void LSM9DS1::readRawGyro()
 	uint8_t temp[6]; // We'll read six bytes from the gyro into temp
 	if ( xgReadBytes(OUT_X_L_G, temp, 6) == 6) // Read 6 bytes, beginning at OUT_X_L_G
 	{
-		gx = (temp[1] << 8) | temp[0]; // Store x-axis values into gx
-		gy = (temp[3] << 8) | temp[2]; // Store y-axis values into gy
-		gz = (temp[5] << 8) | temp[4]; // Store z-axis values into gz
+		raw_gx = (temp[1] << 8) | temp[0]; // Store x-axis values into gx
+		raw_gy = (temp[3] << 8) | temp[2]; // Store y-axis values into gy
+		raw_gz = (temp[5] << 8) | temp[4]; // Store z-axis values into gz
 	}
 }
 
@@ -708,24 +644,16 @@ void LSM9DS1::setGyroScale(gyro_scale gScl)
 {
 	// Read current value of CTRL_REG1_G:
 	uint8_t ctrl1RegValue = xgReadByte(CTRL_REG1_G);
+
 	// Mask out scale bits (3 & 4):
-	ctrl1RegValue &= 0xE7;
-	switch (gScl)
-	{
-		case gyro_scale::G_SCALE_500DPS:
-			ctrl1RegValue |= (0x1 << 3);
-			settings.gyro.scale = G_SCALE_500DPS;
-			break;
-		case gyro_scale::G_SCALE_2000DPS:
-			ctrl1RegValue |= (0x3 << 3);
-			settings.gyro.scale = G_SCALE_2000DPS;
-			break;
-		default: // Otherwise we'll set it to 245 dps (0x0 << 3)
-			settings.gyro.scale = G_SCALE_245DPS;
-			break;
-	}
+	ctrl1RegValue &= 0b11100111;
+	ctrl1RegValue |= (gScl << 3);
 	xgWriteByte(CTRL_REG1_G, ctrl1RegValue);
 
+	// Save the new scaling
+	settings.gyro.scale = gScl;
+
+	// Calculate the new LSB to deg/s ratio
 	calcgRes();
 }
 
@@ -733,112 +661,88 @@ void LSM9DS1::setAccelScale(accel_scale aScl)
 {
 	// We need to preserve the other bytes in CTRL_REG6_XL. So, first read it:
 	uint8_t tempRegValue = xgReadByte(CTRL_REG6_XL);
-	// Mask out accel scale bits:
-	tempRegValue &= 0xE7;
 
-	switch (aScl)
-	{
-		case A_SCALE_4G:
-			tempRegValue |= (0x2 << 3);
-			settings.accel.scale = A_SCALE_4G;
-			break;
-		case A_SCALE_8G:
-			tempRegValue |= (0x3 << 3);
-			settings.accel.scale = A_SCALE_8G;
-			break;
-		case A_SCALE_16G:
-			tempRegValue |= (0x1 << 3);
-			settings.accel.scale = A_SCALE_16G;
-			break;
-		default: // Otherwise it'll be set to 2g (0x0 << 3)
-			settings.accel.scale = A_SCALE_2G;
-			break;
-	}
+	// Mask out accel scale bits:
+	tempRegValue &= 0b11100111;
+	tempRegValue |= (aScl << 3);
 	xgWriteByte(CTRL_REG6_XL, tempRegValue);
 
-	// Then calculate a new aRes, which relies on aScale being set correctly:
+	// Save the new scaling
+	settings.accel.scale = aScl;
+
+	// Calculate the new LSB to gs ratio
 	calcaRes();
 }
 
 void LSM9DS1::setMagScale(mag_scale mScl)
 {
 	// We need to preserve the other bytes in CTRL_REG6_XM. So, first read it:
-	uint8_t temp = mReadByte(CTRL_REG2_M);
-	// Then mask out the mag scale bits:
-	temp &= 0xFF^(0x3 << 5);
+	uint8_t ctrl2Reg = mReadByte(CTRL_REG2_M);
 
-	switch (mScl)
-	{
-	case M_SCALE_8GS:
-		temp |= (0x1 << 5);
-		settings.mag.scale = M_SCALE_8GS;
-		break;
-	case M_SCALE_12GS:
-		temp |= (0x2 << 5);
-		settings.mag.scale = M_SCALE_12GS;
-		break;
-	case M_SCALE_16GS:
-		temp |= (0x3 << 5);
-		settings.mag.scale = M_SCALE_16GS;
-		break;
-	default: // Otherwise we'll default to 4 gauss (00)
-		settings.mag.scale = M_SCALE_4GS;
-		break;
-	}
+	// We can just zero the entire register, as the other bits are only set
+	// when rebooting and are immediately cleared
+	ctrl2Reg = 0;
+
+	// Set the new scale value
+	ctrl2Reg |= (mScl << 5);
 
 	// And write the new register value back into CTRL_REG6_XM:
 	mWriteByte(CTRL_REG2_M, temp);
 
-	// We've updated the sensor, but we also need to update our class variables
-	// First update mScale:
-	//mScale = mScl;
-	// Then calculate a new mRes, which relies on mScale being set correctly:
+	// Update the LSB to gauss ratio
 	calcmRes();
 }
 
 void LSM9DS1::setGyroODR(gyro_odr gRate)
 {
-	// Only do this if gRate is not 0 (which would disable the gyro)
-	if ((gRate & 0x07) != 0)
-	{
-		// We need to preserve the other bytes in CTRL_REG1_G. So, first read it:
-		uint8_t temp = xgReadByte(CTRL_REG1_G);
-		// Then mask out the gyro ODR bits:
-		temp &= 0xFF^(0x7 << 5);
-		temp |= (gRate & 0x07) << 5;
-		// Update our settings struct
-		settings.gyro.sampleRate = gyro_odr(gRate & 0x07);
-		// And write the new register value back into CTRL_REG1_G:
-		xgWriteByte(CTRL_REG1_G, temp);
-	}
+	// We need to preserve the other bytes in CTRL_REG1_G. So, first read it:
+	uint8_t temp = xgReadByte(CTRL_REG1_G);
+
+	// Clear the ODR bits
+	temp &= 0b00011111;
+
+	// Set the new rate
+	temp |= (gRate << 5);
+
+	// Update our settings struct
+	settings.gyro.sampleRate = gRate;
+
+	// And write the new register value back into CTRL_REG1_G:
+	xgWriteByte(CTRL_REG1_G, temp);
 }
 
 void LSM9DS1::setAccelODR(accel_odr aRate)
 {
-	// Only do this if aRate is not 0 (which would disable the accel)
-	if ((aRate & 0x07) != 0)
-	{
-		// We need to preserve the other bytes in CTRL_REG1_XM. So, first read it:
-		uint8_t temp = xgReadByte(CTRL_REG6_XL);
-		// Then mask out the accel ODR bits:
-		temp &= 0x1F;
-		// Then shift in our new ODR bits:
-		temp |= ((aRate & 0x07) << 5);
-		settings.accel.sampleRate = accel_odr(aRate & 0x07);
-		// And write the new register value back into CTRL_REG1_XM:
-		xgWriteByte(CTRL_REG6_XL, temp);
-	}
+	// We need to preserve the other bytes in CTRL_REG1_XM. So, first read it:
+	uint8_t temp = xgReadByte(CTRL_REG6_XL);
+
+	// Then mask out the accel ODR bits:
+	temp &= 0b00011111;
+
+	// Then shift in our new ODR bits:
+	temp |= (aRate << 5);
+
+	// Save the new sample rate
+	settings.accel.sampleRate = aRate;
+
+	// And write the new register value back into CTRL_REG1_XM:
+	xgWriteByte(CTRL_REG6_XL, temp);
 }
 
 void LSM9DS1::setMagODR(mag_odr mRate)
 {
 	// We need to preserve the other bytes in CTRL_REG5_XM. So, first read it:
 	uint8_t temp = mReadByte(CTRL_REG1_M);
+
 	// Then mask out the mag ODR bits:
-	temp &= 0xFF^(0x7 << 2);
+	temp &= 0b11100011;
+
 	// Then shift in our new ODR bits:
-	temp |= ((mRate & 0x07) << 2);
-	settings.mag.sampleRate = mag_odr(mRate & 0x07);
+	temp |= (mRate << 2);
+
+	// Save the new sample rate
+	settings.mag.sampleRate = mRate;
+
 	// And write the new register value back into CTRL_REG5_XM:
 	mWriteByte(CTRL_REG1_M, temp);
 }
@@ -848,13 +752,13 @@ void LSM9DS1::calcgRes()
 	switch (settings.gyro.scale)
 	{
 	case G_SCALE_245DPS:
-		gRes = SENSITIVITY_GYROSCOPE_245;
+		gRes = SENSITIVITY_GYROSCOPE_245DPS;
 		break;
 	case G_SCALE_500DPS:
-		gRes = SENSITIVITY_GYROSCOPE_500;
+		gRes = SENSITIVITY_GYROSCOPE_500DPS;
 		break;
 	case G_SCALE_2000DPS:
-		gRes = SENSITIVITY_GYROSCOPE_2000;
+		gRes = SENSITIVITY_GYROSCOPE_2000DPS;
 		break;
 	default:
 		break;
@@ -866,16 +770,16 @@ void LSM9DS1::calcaRes()
 	switch (settings.accel.scale)
 	{
 	case A_SCALE_2G:
-		aRes = SENSITIVITY_ACCELEROMETER_2;
+		aRes = SENSITIVITY_ACCELEROMETER_2G;
 		break;
 	case A_SCALE_4G:
-		aRes = SENSITIVITY_ACCELEROMETER_4;
+		aRes = SENSITIVITY_ACCELEROMETER_4G;
 		break;
 	case A_SCALE_8G:
-		aRes = SENSITIVITY_ACCELEROMETER_8;
+		aRes = SENSITIVITY_ACCELEROMETER_8G;
 		break;
 	case A_SCALE_16G:
-		aRes = SENSITIVITY_ACCELEROMETER_16;
+		aRes = SENSITIVITY_ACCELEROMETER_16G;
 		break;
 	default:
 		break;
@@ -887,16 +791,16 @@ void LSM9DS1::calcmRes()
 	switch (settings.mag.scale)
 	{
 	case M_SCALE_4GS:
-		mRes = SENSITIVITY_MAGNETOMETER_4;
+		mRes = SENSITIVITY_MAGNETOMETER_4G;
 		break;
 	case M_SCALE_8GS:
-		mRes = SENSITIVITY_MAGNETOMETER_8;
+		mRes = SENSITIVITY_MAGNETOMETER_8G;
 		break;
 	case M_SCALE_12GS:
-		mRes = SENSITIVITY_MAGNETOMETER_12;
+		mRes = SENSITIVITY_MAGNETOMETER_12G;
 		break;
 	case M_SCALE_16GS:
-		mRes = SENSITIVITY_MAGNETOMETER_16;
+		mRes = SENSITIVITY_MAGNETOMETER_16G;
 		break;
 	}
 }
@@ -1071,7 +975,7 @@ void LSM9DS1::setFIFO(fifoMode_type fifoMode, uint8_t fifoThs)
 	// Limit threshold - 0x1F (31) is the maximum. If more than that was asked
 	// limit it to the maximum.
 	uint8_t threshold = fifoThs <= 0x1F ? fifoThs : 0x1F;
-	xgWriteByte(FIFO_CTRL, ((fifoMode & 0x7) << 5) | (threshold & 0x1F));
+	xgWriteByte(FIFO_CTRL, ((fifoMode << 5) | (threshold & 0b00011111));
 }
 
 uint8_t LSM9DS1::getFIFOSamples()
