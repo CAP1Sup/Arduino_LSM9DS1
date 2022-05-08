@@ -22,6 +22,8 @@ Distributed as-is; no warranty is given.
 #ifndef __SparkFunLSM9DS1_H__
 #define __SparkFunLSM9DS1_H__
 
+//#define DEBUGGING
+
 #if defined(ARDUINO) && ARDUINO >= 100
   #include "Arduino.h"
 #else
@@ -100,19 +102,23 @@ public:
 	uint16_t begin(uint8_t agAddress = LSM9DS1_AG_ADDR(1), uint8_t mAddress = LSM9DS1_M_ADDR(1), TwoWire& wirePort = Wire); //By default use the default I2C addres, and use Wire port
 	uint16_t beginSPI(uint8_t ag_CS_pin, uint8_t m_CS_pin);
 
-	void calibrate();
-	void calibrateMag();
-	void magOffset(uint8_t axis, int16_t offset);
-
 	// Bias corrections (slope)
-	void setAccelSlope(float x, float y, float z);
-	void setGyroSlope(float x, float y, float z);
-	void setMagSlope(float x, float y, float z);
+	void setAccelSlopeBiases(float x, float y, float z);
+	void setGyroSlopeBiases(float x, float y, float z);
+	void setMagSlopeBiases(float x, float y, float z);
+
+	void setAccelSlopeBiases(float biases[3]);
+	void setGyroSlopeBiases(float biases[3]);
+	void setMagSlopeBiases(float biases[3]);
 
 	// Bias corrections (offsets)
-	void setAccelOffset(float x, float y, float z);
-	void setGyroOffset(float x, float y, float z);
-	void setMagOffset(float x, float y, float z);
+	void setAccelOffsetBiases(float x, float y, float z);
+	void setGyroOffsetBiases(float x, float y, float z);
+	void setMagOffsetBiases(float x, float y, float z);
+
+	void setAccelOffsetBiases(float biases[3]);
+	void setGyroOffsetBiases(float biases[3]);
+	void setMagOffsetBiases(float biases[3]);
 
 	// accelAvailable() -- Polls the accelerometer status register to check
 	// if new data is available.
@@ -204,6 +210,7 @@ public:
 	// 	- gScl = The desired gyroscope scale. Must be one of three possible
 	//		values from the gyro_scale.
 	void setGyroScale(gyro_scale gScl);
+	uint16_t getGyroScaleInt();
 
 	// setAccelScale() -- Set the full-scale range of the accelerometer.
 	// This function can be called to set the scale of the accelerometer to
@@ -212,6 +219,7 @@ public:
 	// 	- aScl = The desired accelerometer scale. Must be one of five possible
 	//		values from the accel_scale.
 	void setAccelScale(accel_scale aScl);
+	uint8_t getAccelScaleInt();
 
 	// setMagScale() -- Set the full-scale range of the magnetometer.
 	// This function can be called to set the scale of the magnetometer to
@@ -220,21 +228,25 @@ public:
 	// 	- mScl = The desired magnetometer scale. Must be one of four possible
 	//		values from the mag_scale.
 	void setMagScale(mag_scale mScl);
+	uint8_t getMagScaleInt();
 
 	// setGyroODR() -- Set the output data rate and bandwidth of the gyroscope
 	// Input:
 	//	- gRate = The desired output rate and cutoff frequency of the gyro.
 	void setGyroODR(gyro_odr gRate);
+	float getGyroODRFloat();
 
 	// setAccelODR() -- Set the output data rate of the accelerometer
 	// Input:
 	//	- aRate = The desired output rate of the accel.
 	void setAccelODR(accel_odr aRate);
+	float getAccelODRFloat();
 
 	// setMagODR() -- Set the output data rate of the magnetometer
 	// Input:
 	//	- mRate = The desired output rate of the mag.
 	void setMagODR(mag_odr mRate);
+	float getMagODRFloat();
 
 	// configInactivity() -- Configure inactivity interrupt parameters
 	// Input:
@@ -348,17 +360,27 @@ public:
 	// getFIFOSamples() - Get number of FIFO samples
 	uint8_t getFIFOSamples();
 
+	// Calibration procedure
+	void openGyroCalibration();
+	void openAccelCalibration();
 
+// Nothing is sacred in debugging mode
+#if !defined(DEBUGGING)
 protected:
+#endif
 
 	// gRes, aRes, and mRes store the current resolution for each sensor.
 	// Units of these values would be DPS (or g's or Gs's) per ADC tick.
 	// This value is calculated as (sensor scale) / (2^15).
 	float gRes, aRes, mRes;
 
-	// init() -- Sets up gyro, accel, and mag settings to default.
+	uint8_t acceMMlOK=0; // bit 0..2 maxXYZ bit 3..5 minXYZ
+	float maxAX = 1, maxAY=1, maxAZ=1, minAX=-1, minAY=-1, minAZ=-1; // Accel Slope
+	float zeroAX1 =0,zeroAX2 =0,zeroAY1 =0,zeroAY2 =0,zeroAZ1 =0,zeroAZ2 =0;  //Accel Offset
+
+	// initSettings() -- Sets up gyro, accel, and mag settings to default.
 	// to set com interface and/or addresses see begin() and beginSPI().
-	void init();
+	void initSettings();
 
 	// initGyro() -- Sets up the gyroscope to begin reading.
 	// This function steps through all five gyroscope control registers.
@@ -524,6 +546,15 @@ protected:
 	// Output: No value is returned by the function, but the registers read are
 	// 		all stored in the *dest array given.
 	uint8_t I2CreadBytes(uint8_t address, uint8_t subAddress, uint8_t * dest, uint8_t count);
+
+	// Calibration methods
+	// In calibration.cpp
+	void calibrateGyroOffset(uint16_t sampleCount);
+	void calibrateGyroSlope(uint8_t turnangle);
+	void readGyroForAvg(int16_t sampleCount, float &averX, float &averY, float &averZ);
+
+	void calibrateAccel(uint16_t sampleCount);
+	void readAccelForAvg(uint16_t sampleCount, float &averX, float &averY, float &averZ);
 };
 
 #endif // SFE_LSM9DS1_H //

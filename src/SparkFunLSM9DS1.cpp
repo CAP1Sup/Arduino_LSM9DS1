@@ -36,24 +36,24 @@ Distributed as-is; no warranty is given.
 // Sensor Sensitivity Constants
 // Values set according to the typical specifications provided in
 // table 3 of the LSM9DS1 datasheet. (pg 12)
-#define SENSITIVITY_ACCELEROMETER_2G  0.0000610352F
-#define SENSITIVITY_ACCELEROMETER_4G  0.0001220703F
-#define SENSITIVITY_ACCELEROMETER_8G  0.0002441406F
-#define SENSITIVITY_ACCELEROMETER_16G 0.0004882813F
-#define SENSITIVITY_GYROSCOPE_245DPS  0.0074768066F
-#define SENSITIVITY_GYROSCOPE_500DPS  0.0152587891F
-#define SENSITIVITY_GYROSCOPE_2000DPS 0.0610351563F
+#define SENSITIVITY_ACCELEROMETER_2G  0.0000610352
+#define SENSITIVITY_ACCELEROMETER_4G  0.0001220703
+#define SENSITIVITY_ACCELEROMETER_8G  0.0002441406
+#define SENSITIVITY_ACCELEROMETER_16G 0.0004882813
+#define SENSITIVITY_GYROSCOPE_245DPS  0.0074768066
+#define SENSITIVITY_GYROSCOPE_500DPS  0.0152587891
+#define SENSITIVITY_GYROSCOPE_2000DPS 0.0610351563
 #define SENSITIVITY_MAGNETOMETER_4G   SENSITIVITY_ACCELEROMETER_4G
 #define SENSITIVITY_MAGNETOMETER_8G   SENSITIVITY_ACCELEROMETER_8G
-#define SENSITIVITY_MAGNETOMETER_12G  0.0003662109F
+#define SENSITIVITY_MAGNETOMETER_12G  0.0003662109
 #define SENSITIVITY_MAGNETOMETER_16G  SENSITIVITY_ACCELEROMETER_16G
 
 LSM9DS1::LSM9DS1()
 {
-	init(); //Initialise settings
+	initSettings(); //Initialise settings
 }
 
-void LSM9DS1::init()
+void LSM9DS1::initSettings()
 {
 	settings.gyro.enabled = true;
 	settings.gyro.enableX = true;
@@ -78,7 +78,7 @@ void LSM9DS1::init()
 	settings.gyro.flipX = false;
 	settings.gyro.flipY = false;
 	settings.gyro.flipZ = false;
-	settings.gyro.latchInterrupt = true;
+	settings.gyro.latchInterrupt = false;
 
 	settings.accel.enabled = true;
 	settings.accel.enableX = true;
@@ -190,8 +190,8 @@ uint16_t LSM9DS1::beginSPI(uint8_t ag_CS_pin, uint8_t m_CS_pin)
 	initSPI();	// Initialize SPI
 
 	// Reboot device and settings to default
-	xgWriteByte(CTRL_REG8, 0x05);
-	mWriteByte(CTRL_REG2_M, 0x0c);
+	xgWriteByte(CTRL_REG8, 0b101);
+	mWriteByte(CTRL_REG2_M, 0b1100);
 
 	// Allow the IMU time to reboot
 	delay(10);
@@ -338,94 +338,6 @@ void LSM9DS1::initAccel()
 	xgWriteByte(CTRL_REG7_XL, tempRegValue);
 }
 
-/**
- * This is a function that uses the FIFO to accumulate sample of accelerometer and gyro data,
- * average them, scales them to  gs and deg/s, respectively, and then passes the biases to the
- * main sketch for subtraction from all subsequent data. There are no gyro and accelerometer bias
- * registers to store the data as there are in the ADXL345, a precursor to the LSM9DS0, or the
- * MPU-9150, so we have to subtract the biases ourselves. This results in a more accurate measurement
- * in general and can remove errors due to imprecise or varying initial placement. Calibration of
- * sensor data in this manner is good practice.
- *
- * @param autoCalc If the calibration should be automatically applied to future readings
-*/
-void LSM9DS1::calibrate()
-{
-	/*
-	uint8_t sampleCount = 0;
-	int32_t aBiasRawTemp[3] = {0, 0, 0};
-	int32_t gBiasRawTemp[3] = {0, 0, 0};
-
-	// Turn on FIFO and set threshold to 32 samples
-	enableFIFO(true);
-	setFIFO(FIFO_THS, 0x1F);
-
-	// Wait for FIFO to fill
-	while (sampleCount < 0x1F)
-	{
-		sampleCount = (xgReadByte(FIFO_SRC) & 0x3F); // Read number of stored samples
-	}
-
-	// Read the device until the FIFO is empty
-	for(uint8_t sample = 0; sample < sampleCount; sample++)
-	{
-		readRawGyro();
-		gBiasRawTemp[0] += raw_gx;
-		gBiasRawTemp[1] += raw_gy;
-		gBiasRawTemp[2] += raw_gz;
-		readRawAccel();
-		aBiasRawTemp[0] += raw_ax;
-		aBiasRawTemp[1] += raw_ay;
-		aBiasRawTemp[2] += raw_az - (int16_t)(1./aRes); // Assumes sensor facing up!
-	}
-
-	// Calculate the biases for each axis
-	for (uint8_t axis = 0; axis < 3; axis++)
-	{
-		gBiasRaw[axis] = gBiasRawTemp[axis] / sampleCount;
-		gBias[axis] = gBiasRaw[axis] * gRes;
-		aBiasRaw[axis] = aBiasRawTemp[axis] / sampleCount;
-		aBias[axis] = aBiasRaw[axis] * aRes;
-	}
-
-	// No need for FIFO anymore, disable it
-	enableFIFO(false);
-	setFIFO(FIFO_OFF, 0x00);
-	*/
-}
-
-void LSM9DS1::calibrateMag()
-{
-	/*
-	int i, j;
-	int16_t magMin[3] = {0, 0, 0};
-	int16_t magMax[3] = {0, 0, 0};
-
-	for (i=0; i<128; i++)
-	{
-		while (!magAvailable())
-			;
-		readRawMag();
-		int16_t magTemp[3] = {0, 0, 0};
-		magTemp[0] = raw_mx;
-		magTemp[1] = raw_my;
-		magTemp[2] = raw_mz;
-		for (j = 0; j < 3; j++)
-		{
-			if (magTemp[j] > magMax[j]) magMax[j] = magTemp[j];
-			if (magTemp[j] < magMin[j]) magMin[j] = magTemp[j];
-		}
-	}
-	for (j = 0; j < 3; j++)
-	{
-		mBiasRaw[j] = (magMax[j] + magMin[j]) / 2;
-		mBias[j] = mBiasRaw[j] * mRes;
-		if (loadIn)
-			magOffset(j, mBiasRaw[j]);
-	}
-	*/
-}
-
 void LSM9DS1::initMag()
 {
 	uint8_t tempRegValue = 0;
@@ -484,14 +396,18 @@ void LSM9DS1::initMag()
 
 
 // Taken from https://github.com/FemmeVerbeek/Arduino_LSM9DS1/blob/master/src/LSM9DS1.cpp
-void LSM9DS1::setAccelOffset(float x, float y, float z)
+void LSM9DS1::setAccelOffsetBiases(float x, float y, float z)
 {  aOffsetBias[0] = x / aSlopeBias[0];
    aOffsetBias[1] = y / aSlopeBias[1];
    aOffsetBias[2] = z / aSlopeBias[2];
 }
 
+void LSM9DS1::setAccelOffsetBiases(float biases[3]) {
+	setAccelOffsetBiases(biases[0], biases[1], biases[2]);
+}
+
 //Slope is already dimensionless, so it can be stored as is.
-void LSM9DS1::setAccelSlope(float x, float y, float z)
+void LSM9DS1::setAccelSlopeBiases(float x, float y, float z)
 {  if (x==0) x=1;  //zero slope not allowed
    if (y==0) y=1;
    if (z==0) z=1;
@@ -500,14 +416,22 @@ void LSM9DS1::setAccelSlope(float x, float y, float z)
    aSlopeBias[2] = z;
 }
 
-void LSM9DS1::setGyroOffset(float x, float y, float z)
+void LSM9DS1::setAccelSlopeBiases(float slopes[3]) {
+	setAccelSlopeBiases(slopes[0], slopes[1], slopes[2]);
+}
+
+void LSM9DS1::setGyroOffsetBiases(float x, float y, float z)
 {  gOffsetBias[0] = x / gSlopeBias[0];
    gOffsetBias[1] = y / gSlopeBias[1];
    gOffsetBias[2] = z / gSlopeBias[2];
 }
 
+void LSM9DS1::setGyroOffsetBiases(float biases[3]) {
+	setGyroOffsetBiases(biases[0], biases[1], biases[2]);
+}
+
 // Slope is already dimensionless, so it can be stored as is.
-void LSM9DS1::setGyroSlope(float x, float y, float z)
+void LSM9DS1::setGyroSlopeBiases(float x, float y, float z)
 {  if (x==0) x=1;  //zero slope not allowed
    if (y==0) y=1;
    if (z==0) z=1;
@@ -516,20 +440,32 @@ void LSM9DS1::setGyroSlope(float x, float y, float z)
    gSlopeBias[2] = z;
 }
 
-void LSM9DS1::setMagOffset(float x, float y, float z)
+void LSM9DS1::setGyroSlopeBiases(float biases[3]) {
+	setGyroSlopeBiases(biases[0], biases[1], biases[2]);
+}
+
+void LSM9DS1::setMagOffsetBiases(float x, float y, float z)
 {  mOffsetBias[0] = x / mSlopeBias[0];
    mOffsetBias[1] = y / mSlopeBias[1];
    mOffsetBias[2] = z / mSlopeBias[2];
 }
 
+void LSM9DS1::setMagOffsetBiases(float biases[3]) {
+	setMagOffsetBiases(biases[0], biases[1], biases[2]);
+}
+
 //Slope is already dimensionless, so it can be stored as is.
-void LSM9DS1::setMagSlope(float x, float y, float z)
+void LSM9DS1::setMagSlopeBiases(float x, float y, float z)
 {  if (x==0) x=1;  //zero slope not allowed
    if (y==0) y=1;
    if (z==0) z=1;
    mSlopeBias[0] = x;
    mSlopeBias[1] = y;
    mSlopeBias[2] = z;
+}
+
+void LSM9DS1::setMagSlopeBiases(float biases[3]) {
+	setMagSlopeBiases(biases[0], biases[1], biases[2]);
 }
 
 bool LSM9DS1::accelAvailable()
@@ -726,6 +662,17 @@ void LSM9DS1::setGyroScale(gyro_scale gScl)
 	calcgRes();
 }
 
+uint16_t LSM9DS1::getGyroScaleInt() {
+	switch (settings.gyro.scale) {
+		case G_SCALE_245DPS:
+			return 245;
+		case G_SCALE_500DPS:
+			return 500;
+		case G_SCALE_2000DPS:
+			return 2000;
+	}
+}
+
 void LSM9DS1::setAccelScale(accel_scale aScl)
 {
 	// We need to preserve the other bytes in CTRL_REG6_XL. So, first read it:
@@ -741,6 +688,19 @@ void LSM9DS1::setAccelScale(accel_scale aScl)
 
 	// Calculate the new LSB to gs ratio
 	calcaRes();
+}
+
+uint8_t LSM9DS1::getAccelScaleInt() {
+	switch (settings.accel.scale) {
+		case A_SCALE_2G:
+			return 2;
+		case A_SCALE_4G:
+			return 4;
+		case A_SCALE_8G:
+			return 8;
+		case A_SCALE_16G:
+			return 16;
+	}
 }
 
 void LSM9DS1::setMagScale(mag_scale mScl)
@@ -762,6 +722,19 @@ void LSM9DS1::setMagScale(mag_scale mScl)
 	calcmRes();
 }
 
+uint8_t LSM9DS1::getMagScaleInt() {
+	switch (settings.mag.scale) {
+		case M_SCALE_4GS:
+			return 4;
+		case M_SCALE_8GS:
+			return 8;
+		case M_SCALE_12GS:
+			return 12;
+		case M_SCALE_16GS:
+			return 16;
+	}
+}
+
 void LSM9DS1::setGyroODR(gyro_odr gRate)
 {
 	// We need to preserve the other bytes in CTRL_REG1_G. So, first read it:
@@ -779,6 +752,26 @@ void LSM9DS1::setGyroODR(gyro_odr gRate)
 	// And write the new register value back into CTRL_REG1_G:
 	xgWriteByte(CTRL_REG1_G, temp);
 }
+
+float LSM9DS1::getGyroODRFloat() {
+	switch (settings.gyro.sampleRate) {
+		case G_ODR_14_9HZ:
+			return 14.9;
+		case G_ODR_59_5HZ:
+			return 59.5;
+		case G_ODR_119HZ:
+			return 119;
+		case G_ODR_238HZ:
+			return 238;
+		case G_ODR_476HZ:
+			return 476;
+		case G_ODR_952HZ:
+			return 952;
+		default:
+			return 0; // Power down mode
+	}
+}
+
 
 void LSM9DS1::setAccelODR(accel_odr aRate)
 {
@@ -798,6 +791,25 @@ void LSM9DS1::setAccelODR(accel_odr aRate)
 	xgWriteByte(CTRL_REG6_XL, temp);
 }
 
+float LSM9DS1::getAccelODRFloat() {
+	switch (settings.accel.sampleRate) {
+		case A_ODR_10HZ:
+			return 10;
+		case A_ODR_50HZ:
+			return 50;
+		case A_ODR_119HZ:
+			return 119;
+		case A_ODR_238HZ:
+			return 238;
+		case A_ODR_476HZ:
+			return 476;
+		case A_ODR_952HZ:
+			return 952;
+		default:
+			return 0; // Power down mode
+	}
+}
+
 void LSM9DS1::setMagODR(mag_odr mRate)
 {
 	// We need to preserve the other bytes in CTRL_REG5_XM. So, first read it:
@@ -814,6 +826,27 @@ void LSM9DS1::setMagODR(mag_odr mRate)
 
 	// And write the new register value back into CTRL_REG5_XM:
 	mWriteByte(CTRL_REG1_M, temp);
+}
+
+float LSM9DS1::getMagODRFloat() {
+	switch (settings.mag.sampleRate) {
+		case M_ODR_0_625HZ:
+			return 0.625;
+		case M_ODR_1_25HZ:
+			return 1.25;
+		case M_ODR_2_5HZ:
+			return 2.5;
+		case M_ODR_5HZ:
+			return 5;
+		case M_ODR_10HZ:
+			return 10;
+		case M_ODR_20HZ:
+			return 20;
+		case M_ODR_40HZ:
+			return 40;
+		default:
+			return 0; // Power down mode?
+	}
 }
 
 void LSM9DS1::calcgRes()

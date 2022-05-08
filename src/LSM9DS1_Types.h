@@ -105,14 +105,14 @@ enum accel_hres_bw
 // mag_odr defines all possible output data rates of the magnetometer:
 enum mag_odr
 {
-	M_ODR_0625HZ = 0, // 0.625 Hz (0)
-	M_ODR_125HZ  = 1, // 1.25 Hz (1)
-	M_ODR_250HZ  = 2, // 2.5 Hz (2)
-	M_ODR_5HZ    = 3, // 5 Hz (3)
-	M_ODR_10HZ   = 4, // 10 Hz (4)
-	M_ODR_20HZ   = 5, // 20 Hz (5)
-	M_ODR_40HZ   = 6, // 40 Hz (6)
-	M_ODR_80HZ   = 7  // 80 Hz (7)
+	M_ODR_0_625HZ = 0, // 0.625 Hz (0)
+	M_ODR_1_25HZ  = 1, // 1.25 Hz (1)
+	M_ODR_2_5HZ   = 2, // 2.5 Hz (2)
+	M_ODR_5HZ     = 3, // 5 Hz (3)
+	M_ODR_10HZ    = 4, // 10 Hz (4)
+	M_ODR_20HZ    = 5, // 20 Hz (5)
+	M_ODR_40HZ    = 6, // 40 Hz (6)
+	M_ODR_80HZ    = 7  // 80 Hz (7)
 };
 
 // mag_axis_op_mode defines all possible mag axis operation modes
