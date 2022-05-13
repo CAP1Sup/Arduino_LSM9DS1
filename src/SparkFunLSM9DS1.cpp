@@ -844,6 +844,8 @@ float LSM9DS1::getMagODRFloat() {
 			return 20;
 		case M_ODR_40HZ:
 			return 40;
+		case M_ODR_80HZ:
+			return 80;
 		default:
 			return 0; // Power down mode?
 	}

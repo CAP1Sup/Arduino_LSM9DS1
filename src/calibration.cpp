@@ -1,6 +1,6 @@
 #include "SparkFunLSM9DS1.h"
 
-#define MAX_CALIB_GYRO_DEV 200 // deg^2
+#define MAX_CALIB_GYRO_DEV 200  // deg^2
 #define MAX_ACCEL_CALIB_DEV 0.1 // g
 
 // Note that these calibration procedures were originally from https://github.com/FemmeVerbeek/Arduino_LSM9DS1
@@ -59,6 +59,39 @@ void readAnswer(char msg[], uint16_t &param)
         Serial.read();
     }
     Serial.println("\n\n\n\n\n\n\n");
+}
+
+void readAnswer(char msg[], float &param)
+{
+    char ch = 0;
+    byte count = 0;
+    const byte NofChars = 8;
+    char ans[NofChars];
+    while (Serial.available())
+    {
+        Serial.read();
+    } // empty read buffer
+    Serial.print(msg);
+    Serial.print(param);
+    Serial.print(F(" Enter new value "));
+    while (byte(ch) != 10 && byte(ch) != 13 && count < (NofChars - 1))
+    {
+        if (Serial.available())
+        {
+            ch = Serial.read();
+            ans[count] = ch;
+            count++;
+        }
+    }
+    ans[count] = 0;
+    Serial.println(ans);
+    if (count > 1)
+        param = atof(ans);
+    while (Serial.available())
+    {
+        Serial.read();
+    }
+    Serial.println(F("\n\n\n\n\n\n\n"));
 }
 
 void printSetParam(char txt[], float param[3])
@@ -318,7 +351,6 @@ void LSM9DS1::openAccelCalibration()
         Serial.println(NofCalibrationSamples);
         Serial.println(F("   (X) Exit"));
 
-
         Serial.print(F(" Measured status of axis \n "));
         for (int i = 0; i <= 2; i++)
         {
@@ -441,11 +473,137 @@ void LSM9DS1::readAccelForAvg(uint16_t sampleCount, float &averX, float &averY, 
     averZ = 0;
     for (uint16_t i = 1; i <= sampleCount; i++)
     {
-        while (!accelAvailable());
+        while (!accelAvailable())
+            ;
         readAccel(false);
         averX += ax;
         averY += ay;
         averZ += az;
+        digitalWrite(LED_BUILTIN, (millis() / 125) % 2); // blink onboard led every 250ms
+        if ((i % 30) == 0)
+            Serial.print('.');
+    }
+    averX /= sampleCount;
+    averY /= sampleCount;
+    averZ /= sampleCount;
+    digitalWrite(LED_BUILTIN, 0); // led off
+}
+
+//**********************************************************************************************************************************
+//*********************************************              Magnetometer             **********************************************
+//**********************************************************************************************************************************
+
+void LSM9DS1::openMagCalibration()
+{
+    char incomingByte = 0;
+    float earthMagneticStrength = 49.0;
+    Serial.println(F("\n\n\n\n\n\n\n\n\n\n\n"));
+    while (1) //(incomingByte!='X')
+    {
+        Serial.println(F("Calibrate Magnetometer"));
+        Serial.println(F("During measurement each of the sensor XYZ axes must be aligned in both directions with the Earth's magnetic field."));
+        Serial.println(F("This takes about 10 seconds, if you know the local direction of the magnetic field lines. If you don't, it will take"));
+        Serial.println(F("several minutes, as you have to twist the board around, aiming every axis in every direction until the min and max "));
+        Serial.println(F("values no longer change. Info about the Earthmagnetic field https://en.wikipedia.org/wiki/Earth's_magnetic_field "));
+        Serial.println(F("E.g. in my case (Northern hemisphere)declination=0°, inclination=67°, means the aiming direction is South and a"));
+        Serial.println(F("rather steep 67° above the horizon. "));
+        Serial.println(F("The magnetic field measurement will be heavily disturbed by your set-up, so an \"in-situ\" calibration is advised.\n"));
+        Serial.print(F(" (F) Full Scale setting: ±"));
+        Serial.print(getMagScaleInt());
+        Serial.println(F(" µT"));
+        Serial.print(F(" (R) Output Data Rate (ODR) setting: "));
+        Serial.print(getMagODRFloat());
+        Serial.println(F("Hz (actual value)"));
+        Serial.print(F(" (L) Local intensity of Earth magnetic field  "));
+        Serial.print(earthMagneticStrength);
+        Serial.println(F(" µT  Change into your local value."));
+        Serial.println(F(" (C) Calibrate Magnetometer, Twist board around to find min-max values or aim along earth mag field,  press enter to stop\n"));
+
+        Serial.println(F("   // Magnetometer code"));
+        printSetParam("   imu.setMagOffsetBiases(", mOffsetBias);
+        Serial.println();
+        printSetParam("   imu.setMagSlopeBiases(", mSlopeBias);
+        Serial.println(F("\n\n"));
+        incomingByte = readChar();
+        switch (incomingByte)
+        {
+        case 'L':
+        {
+            readAnswer("\n\nLocal Earth Magnetic Field intensity  ", earthMagneticStrength);
+            break;
+        }
+        case 'C':
+        {
+            calibrateMagneto(earthMagneticStrength);
+            Serial.print(F("\n\n\n\n\n\n"));
+            break;
+        }
+        default:
+        {
+            Serial.println(F("No menu choice\n\n"));
+            Serial.print(incomingByte);
+            break;
+        }
+        }
+    }
+}
+
+void LSM9DS1::calibrateMagneto(float earthMagneticStrength) // measure Offset and Slope of XYZ
+{
+    float x, y, z, Xmin, Xmax, Ymin, Ymax, Zmin, Zmax;
+    unsigned long count = 0;
+    readMagnetoForAvg(10, Xmin, Ymin, Zmin); // find some starting values
+    Xmax = Xmin;
+    Ymax = Ymin;
+    Zmax = Zmin;
+    while (!Serial.available()) // measure until enter key pressed
+    {
+        readMagnetoForAvg(10, x, y, z); // average over a number of samples to reduce the effect of outlyers
+        Xmax = max(Xmax, x);
+        Xmin = min(Xmin, x);
+        Ymax = max(Ymax, y);
+        Ymin = min(Ymin, y);
+        Zmax = max(Zmax, z);
+        Zmin = min(Zmin, z);
+        count++;
+        if ((count & 5) == 0) // reduce the number of prints by a factor
+        {
+            Serial.print(F("Xmin = "));
+            Serial.print(Xmin);
+            Serial.print(F("  Xmax = "));
+            Serial.print(Xmax);
+            Serial.print(F(" Ymin = "));
+            Serial.print(Ymin);
+            Serial.print(F("  Ymax = "));
+            Serial.print(Ymax);
+            Serial.print(F(" Zmin = "));
+            Serial.print(Zmin);
+            Serial.print(F("  Zmax = "));
+            Serial.print(Zmax);
+            Serial.println();
+        }
+    }
+    while (Serial.available())
+        Serial.read();                                                                                                                                        // readStringUntil(13);        //Empty read buffer
+    setMagOffsetBiases((Xmax + Xmin) / 2, (Ymax + Ymin) / 2, (Zmax + Zmin) / 2);                                                                              // store offset
+    setMagSlopeBiases((2 * earthMagneticStrength) / (Xmax - Xmin), (2 * earthMagneticStrength) / (Ymax - Ymin), (2 * earthMagneticStrength) / (Zmax - Zmin)); // store slope
+    magnetOK = true;
+}
+
+void LSM9DS1::readMagnetoForAvg(uint16_t sampleCount, float &averX, float &averY, float &averZ)
+{
+    float x, y, z;
+    averX = 0;
+    averY = 0;
+    averZ = 0;
+    for (int i = 1; i <= sampleCount; i++)
+    {
+        while (!magAvailable())
+            ;
+        readRawMag();
+        averX += raw_mx;
+        averY += raw_my;
+        averZ += raw_mz;
         digitalWrite(LED_BUILTIN, (millis() / 125) % 2); // blink onboard led every 250ms
         if ((i % 30) == 0)
             Serial.print('.');

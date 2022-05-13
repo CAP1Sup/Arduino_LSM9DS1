@@ -363,6 +363,7 @@ public:
 	// Calibration procedure
 	void openGyroCalibration();
 	void openAccelCalibration();
+	void openMagCalibration();
 
 // Nothing is sacred in debugging mode
 #if !defined(DEBUGGING)
@@ -377,6 +378,8 @@ protected:
 	uint8_t acceMMlOK=0; // bit 0..2 maxXYZ bit 3..5 minXYZ
 	float maxAX = 1, maxAY=1, maxAZ=1, minAX=-1, minAY=-1, minAZ=-1; // Accel Slope
 	float zeroAX1 =0,zeroAX2 =0,zeroAY1 =0,zeroAY2 =0,zeroAZ1 =0,zeroAZ2 =0;  //Accel Offset
+
+	bool magnetOK=false;
 
 	// initSettings() -- Sets up gyro, accel, and mag settings to default.
 	// to set com interface and/or addresses see begin() and beginSPI().
@@ -555,6 +558,9 @@ protected:
 
 	void calibrateAccel(uint16_t sampleCount);
 	void readAccelForAvg(uint16_t sampleCount, float &averX, float &averY, float &averZ);
+
+	void calibrateMagneto(float earthMagneticStrength);
+	void readMagnetoForAvg(uint16_t sampleCount, float &averX, float &averY, float &averZ);
 };
 
 #endif // SFE_LSM9DS1_H //
